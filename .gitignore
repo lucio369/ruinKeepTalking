@@ -2,4 +2,9 @@ tokenFile.txt
 bullyingFile.txt
 sala.txt
 ruinKeepTalking.exe
+thomas.ico
 /prevVersions
+/__pycache__
+/build
+/dist
+ruinKeepTalking.spec

@@ -521,6 +521,11 @@ async def on_message(message):
         bot.currentChannel=message.channel
         print(bot.switchChannelOutput.format(channelName=str(bot.currentChannel).upper()))
     print(message.author.name+': '+message.content)
+    if message.attachments!=[]:
+        attachURLS=''
+        for item in message.attachments:
+            attachURLS=attachURLS+item.url+' '
+        print(message.author.name+': '+message.content+'~'+attachURLS)
     if message.author==bot.user:
         return
 ##The above is for the shell: outputting the message content (essentially sniffing the server tbh)
