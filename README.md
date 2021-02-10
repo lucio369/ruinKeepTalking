@@ -1,4 +1,4 @@
-# ruinKeepTalking - You're bomb defusing assistant
+# ruinKeepTalking - Your bomb defusing assistant
 This is a discord api, made using python, made not only for the moderation of a discord server but also to assist a player to defuse a bomb in the game 'Keep Talking and Nobody Explodes'.
 Typically the game functions so that one player must defuse the bomb under the advice of another user (the bomb manual reader). 
 This bot changes the premise to substitute as the manual reader where the defuser can interact with discord to get the required information. 
