@@ -36,6 +36,18 @@ async def init():
 {channelName}
     '''
     bot.busy=False
+    bot.helpContent='''```
+    Wires              Finds correct wire based off user input | .wires [number of wires]
+    Button             Finds correct button based off user input | .button [colour of button] [word on button]
+    Simon Says         Finds correct button based off user input | .simonsays [number of strikes]
+    Whos on First      puts to word response from input word | .whosonfirst
+    Memory             returns appropriate button to press based off user input | .memory
+    Morse Code         works out valid word and frequency encoded in morse | .morse
+    Complicated Wires  responds correct response for each wire based off user input | .compWires
+    Wire Sequences     decides which wires to cut based off user input | .wireseq
+    Passwords          figures out which word is the password from given characters | .passwords
+    Knobs              outputs direction from given 12 bit number | .knobs
+    Help               does this shit```'''
     await bot.initModVar()
 @bot.event
 async def initModVar():
@@ -65,27 +77,26 @@ async def initModVar():
     bot.instructions=[['c','Cut Wire'],['d','Do not cut wire'],['s','Cut wire if LAST DIGIT EVEN'],
                       ['p','Cut wire if bomb has PARRALLEL PORT'],['b','Cut wire if bomb has TWO OR MORE batteries']]
     bot.cWQuestions=[['red','r'],['blue','b'],['has star','s'],['LED on','l']]
-    
+
     #complicated wires variables
     bot.situation=''
     bot.cWIndex=0
     bot.cWQAsked=False
+
+    #knobs constants
+    bot.knobLEDConfigs=[['010111011011','100111001101'],
+                    ['011111010011','100110001001'],
+                    ['010000011101','000000011100'],
+                    ['110111101110','110111100100']]
+    bot.knobDirection=['up','down','left','right']
+
+    #knob variables
+    bot.knobBool=False
 ################################################################################################################################
 @bot.event
 async def Shit(ctx):
-    message='''```
-    Wires              Finds correct wire based off user input | .wires [number of wires]
-    Button             Finds correct button based off user input | .button [colour of button] [word on button]
-    Simon Says         Finds correct button based off user input | .simonsays [number of strikes]
-    Whos on First      puts to word response from input word | .whosonfirst
-    Memory             returns appropriate button to press based off user input | .memory
-    Morse Code         works out valid word and frequency encoded in morse | .morse
-    Complicated Wires  responds correct response for each wire based off user input | .compWires
-    Wire Sequences     decides which wires to cut based off user input | .wireseq
-    Passwords          figures out which word is the password from given characters | .passwords
-    Knobs              outputs direction from given 12 bit number | .knobs
-    Help               does this shit```'''
-    await ctx.channel.send(message)
+    await ctx.channel.send(bot.helpContent)
+    await bot.clearCurrentUser(ctx)
 @bot.event
 async def Wires(ctx,noWires):
     'Wires'
@@ -235,55 +246,55 @@ def WhosOnFirst():
         elif whichList=='first':
             listNum=1
         elif whichList=='no':
-            listNum=2            
+            listNum=2
         elif whichList=='blank':
-            listNum=3        
+            listNum=3
         elif whichList=='nothing':
             listNum=4
         elif whichList=='yes':
-            listNum=5            
+            listNum=5
         elif whichList=='what':
             listNum=6
         elif whichList=='uhhh':
             listNum=7
         elif whichList=='left':
-            listNum=8            
+            listNum=8
         elif whichList=='right':
-            listNum=9        
+            listNum=9
         elif whichList=='middle':
             listNum=10
         elif whichList=='okay':
-            listNum=11            
+            listNum=11
         elif whichList=='wait':
             listNum=12
         elif whichList=='press':
             listNum=13
         elif whichList=='you':
-            listNum=14           
+            listNum=14
         elif whichList=='you are':
-            listNum=15        
+            listNum=15
         elif whichList=='your':
             listNum=16
         elif whichList=='youre':
-            listNum=17            
+            listNum=17
         elif whichList=='ur':
             listNum=18
         elif whichList=='u':
             listNum=19
         elif whichList=='uh huh':
-            listNum=20           
+            listNum=20
         elif whichList=='uh uh':
-            listNum=21       
+            listNum=21
         elif whichList=='what':
             listNum=22
         elif whichList=='done':
-            listNum=23           
+            listNum=23
         elif whichList=='next':
             listNum=24
         elif whichList=='hold':
             listNum=25
         elif whichList=='sure':
-            listNum=26            
+            listNum=26
         elif whichList=='like':
             listNum=27
         print(potencialList[listNum])
@@ -325,7 +336,7 @@ def Memory():
 
         if input('leave? ')=='y':
             leave=True
-            
+
 def MorseCode():
     'Morse Code'
     leave=False
@@ -434,7 +445,7 @@ def Passwords():
                 'world','great','where','write','first',#20-24
                 'water','which','would','every','found',#25-29
                 'could','below','after','about','again']#30-34
-    
+
     tempPasswords=['right','plant','spell','place','point',#0-4
                 'small','study','other','sound','still',#5-9
                 'these','never','their','think','large',#10-14
@@ -456,19 +467,28 @@ def Passwords():
                 print(passwords[count1])
                 print('-----------------------------------------------------------------')
                 count1=count1+1
-                
-def Knobs():
-    'Knobs'
-    ledConfigs=[['010111011011','100111001101'],
-                ['011111010011','100110001001'],
-                ['010000011101','000000011100'],
-                ['110111101110','110111100100']]
-    direction=['up','down','left','right']
-    config=input('Enter the configuration (010111011011): ')
-    for i in range(0,len(ledConfigs)):
-        for j in range(0,len(ledConfigs[i])):
-            if config==ledConfigs[i][j]:
-                print('Set to:',direction[i])
+@bot.event
+async def Knobs(ctx):
+    passed=False
+    if bot.knobBool==False:
+        await ctx.channel.send('Enter the configuration (Twelve bits)')
+        bot.knobBool=True
+    else:
+        for i in range(0,len(bot.knobLEDConfigs)):
+            for j in range(0,len(bot.knobLEDConfigs[i])):
+                if ctx.content==bot.knobLEDConfigs[i][j]:
+                    await ctx.channel.send('```Set to: '+bot.knobDirection[i]+'```')
+                    passed=True
+                    await bot.initModVar()
+                    await bot.clearCurrentUser(ctx)
+                    return
+        if passed!=True:
+            await ctx.channel.send('```bad conditions- restart```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+    await bot.saveCurrentUser(ctx,[bot.knobBool])
+    return
 
 @bot.event
 async def clearCurrentUser(ctx):
@@ -496,7 +516,7 @@ async def saveCurrentUser(ctx,parametersToSave):
             for param in parametersToSave:
                 bot.currentModules[user].append(param)
             return
-                
+
 @bot.event
 async def on_ready():
     await bot.init()
@@ -514,9 +534,8 @@ async def runModules(ctx):
                 await bot.ComplicatedWires(ctx)
             if comm[0]=='.help':
                 await bot.Shit(ctx)
-                await bot.clearCurrentUser(ctx)
             if comm[0]=='.knobs':
-                await message.channel.send('In development')
+                await bot.Knobs(ctx)
             if comm[0]=='.memory':
                 await message.channel.send('In development')
             if comm[0]=='.morse':
@@ -600,5 +619,5 @@ async def on_message(message):
                 else:
                     randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
                 await message.channel.send(randMessage)
-    
+
 bot.run(TOKEN)
