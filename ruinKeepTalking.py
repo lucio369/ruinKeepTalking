@@ -119,7 +119,7 @@ async def Wires(ctx,noWires):
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
         else:
-            await ctx.channel.send('```'+questions[index][bot.itCounter][0]+'```')
+            await ctx.channel.send(questions[index][bot.itCounter][0])
             bot.QAsked=True
     await bot.saveCurrentUser(ctx,[bot.itCounter,bot.QAsked])
 
@@ -139,8 +139,9 @@ async def Button(ctx,colour,word):
             return
     if bot.holdButton!=None:
         if bot.holdButton==True:
-            await ctx.channel.send('```hold button```')
             await ctx.channel.send('''```
+Hold Button
+
 Do the following according to the colour of the light strip:
 
 blue:    release when 4 in any position
@@ -366,7 +367,7 @@ def MorseCode():
 async def ComplicatedWires(ctx):
     if bot.cWIndex<len(bot.cWQuestions):
         if bot.cWQAsked==False:
-            await ctx.channel.send('```'+bot.cWQuestions[bot.cWIndex][0]+'?```')
+            await ctx.channel.send(bot.cWQuestions[bot.cWIndex][0]+'?')
             bot.cWQAsked=True
         else:
             if ctx.content=='yes':
