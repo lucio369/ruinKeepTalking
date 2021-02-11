@@ -7,7 +7,7 @@ bot=commands.Bot(command_prefix='.')
 async def init():
     #general
     bot.ytzCommands=[['.button',False],
-                 ['.compWires',False],
+                 ['.compwires',False],
                  ['.help',False],
                  ['.knobs',False],
                  ['.memory',False],
@@ -35,10 +35,11 @@ async def init():
 ===============================================================================
 {channelName}
     '''
+    bot.busy=False
     await bot.initModVar()
 @bot.event
 async def initModVar():
-    #wires
+    #wires variables
     bot.itCounter=0
     bot.QAsked=False
 
@@ -55,6 +56,20 @@ async def initModVar():
            ('redhold','',False),
            ('  ','',True))
 
+    #complicated wires constants
+    bot.wireSituation=[['','c'],
+                       ['r','s'],['rb','s'],['rs','c'],['rl','b'],['rbs','s'],['rbl','p'],['rsl','b'],['rbsl','d'],
+                       ['b','s'],['bs','d'],['bl','p'],['bsl','p'],
+                       ['s','c'],['sl','b'],
+                       ['l','d']]
+    bot.instructions=[['c','Cut Wire'],['d','Do not cut wire'],['s','Cut wire if LAST DIGIT EVEN'],
+                      ['p','Cut wire if bomb has PARRALLEL PORT'],['b','Cut wire if bomb has TWO OR MORE batteries']]
+    bot.cWQuestions=[['red','r'],['blue','b'],['has star','s'],['LED on','l']]
+    
+    #complicated wires variables
+    bot.situation=''
+    bot.cWIndex=0
+    bot.cWQAsked=False
 ################################################################################################################################
 @bot.event
 async def Shit(ctx):
@@ -90,13 +105,13 @@ async def Wires(ctx,noWires):
             bot.itCounter=bot.itCounter+1
             bot.QAsked=False
         else:
-            await ctx.channel.send('```bad response. restart.```')
+            await ctx.channel.send('```bad conditions- restart```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
             return
     if bot.QAsked==False:
         if index>=len(questions) or index<0:
-            await ctx.channel.send('```bad conditions. restart.```')
+            await ctx.channel.send('```bad conditions- restart```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
         elif bot.itCounter==len(questions[index]):
@@ -347,37 +362,38 @@ def MorseCode():
             leave=True
             print(wordList[possWordIndex[0]][0],'| Frequency:',wordList[possWordIndex[0]][1])
 
-def ComplicatedWires():        
-    'Complicated Wires'
-    wireSituation=[['','c'],
-                   ['r','s'],['rb','s'],['rs','c'],['rl','b'],['rbs','s'],['rbl','p'],['rsl','b'],['rbsl','d'],
-                   ['b','s'],['bs','d'],['bl','p'],['bsl','p'],
-                   ['s','c'],['sl','b'],
-                   ['l','d']]
-    instructions=[['c','Cut Wire'],['d','Do not cut wire'],['s','Cut wire if LAST DIGIT EVEN'],
-                 ['p','Cut wire if bomb has PARRALLEL PORT'],['b','Cut wire if bomb has TWO OR MORE batteries']]
-    leave=False
-    while leave==False:
-        situation=''
-        if input('red: ')=='y':
-            situation=situation+'r'
-        if input('blue: ')=='y':
-            situation=situation+'b'
-        if input('has star: ')=='y':
-            situation=situation+'s'
-        if input('led on: ')=='y':
-            situation=situation+'l'
-
-        for i in range(0,len(wireSituation)):
-            if situation==wireSituation[i][0]:
-                instruction=wireSituation[i][1]
-        for i in range(0,len(instructions)):
-            if instructions[i][0]==instruction:
-                print()
-                print(instructions[i][1])
-                print()
-        if input('leave? ')=='y':
-            leave=True
+@bot.event
+async def ComplicatedWires(ctx):
+    if bot.cWIndex<len(bot.cWQuestions):
+        if bot.cWQAsked==False:
+            await ctx.channel.send('```'+bot.cWQuestions[bot.cWIndex][0]+'?```')
+            bot.cWQAsked=True
+        else:
+            if ctx.content=='yes':
+                bot.situation=bot.situation+bot.cWQuestions[bot.cWIndex][1]
+            elif ctx.content=='no':
+                pass
+            else:
+                await ctx.channel.send('```bad conditions- restart```')
+                await bot.initModVar()
+                await bot.clearCurrentUser(ctx)
+                return
+            bot.cWIndex=bot.cWIndex+1
+            bot.cWQAsked=False
+            await bot.ComplicatedWires(ctx)
+            return
+    else:
+        for i in range(0,len(bot.wireSituation)):
+            if bot.situation==bot.wireSituation[i][0]:
+                instruction=bot.wireSituation[i][1]
+        for i in range(0,len(bot.instructions)):
+            if bot.instructions[i][0]==instruction:
+                await ctx.channel.send('```'+bot.instructions[i][1]+'```')
+                await bot.initModVar()
+                await bot.clearCurrentUser(ctx)
+                return
+    await bot.saveCurrentUser(ctx,[bot.situation,bot.cWIndex,bot.cWQAsked])
+    return
 
 def WireSequences():
     'Wire Sequences'
@@ -456,7 +472,7 @@ def Knobs():
 @bot.event
 async def clearCurrentUser(ctx):
     bot.ytzCommands=[['.button',False],
-                 ['.compWires',False],
+                 ['.compwires',False],
                  ['.help',False],
                  ['.knobs',False],
                  ['.memory',False],
@@ -466,7 +482,6 @@ async def clearCurrentUser(ctx):
                  ['.whosonfirst',False],
                  ['.wires',False],
                  ['.wireseq',False]]
-    print(bot.currentModules)
     for user in range(0,len(bot.currentModules)):
         if ctx.author.id==bot.currentModules[user][0]:
             bot.currentModules.pop(user)
@@ -489,12 +504,13 @@ async def on_ready():
 
 @bot.event
 async def runModules(ctx):
+    bot.busy=True
     for comm in bot.ytzCommands:
         if comm[1]==True:
             if comm[0]=='.button':
                 await bot.Button(ctx,bot.params[0],bot.params[1])
-            if comm[0]=='.compWires':
-                await message.channel.send('In development')
+            if comm[0]=='.compwires':
+                await bot.ComplicatedWires(ctx)
             if comm[0]=='.help':
                 await bot.Shit(ctx)
                 await bot.clearCurrentUser(ctx)
@@ -520,11 +536,13 @@ async def on_message(message):
     if message.channel!=bot.currentChannel:
         bot.currentChannel=message.channel
         print(bot.switchChannelOutput.format(channelName=str(bot.currentChannel).upper()))
-    print(message.author.name+': '+message.content)
     attachURLS=' ~ '
     for item in message.attachments:
         attachURLS=attachURLS+item.url+' '
-    print(message.author.name+': '+message.content++attachURLS)
+    if attachURLS!=' ~ ':
+        print(message.author.name+': '+message.content+attachURLS)
+    else:
+        print(message.author.name+': '+message.content)
     if message.author==bot.user:
         return
 ##The above is for the shell: outputting the message content (essentially sniffing the server tbh)
@@ -555,26 +573,31 @@ async def on_message(message):
                             bot.haltButton,bot.holdButton,bot.qIndex=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.wires':
                             bot.itCounter,bot.QAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
+                        elif bot.currentModule=='.compwires':
+                            bot.situation,bot.cWIndex,bot.cWQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                 await bot.runModules(message)
             else:
                 comm[1]=False
-    if message.content.startswith('thanks'):
-        await message.channel.send('no worries')
-    elif message.content.startswith('fuck off') or message.content.startswith('fuck you'):
-        await message.channel.send('no u')
-    elif message.content=='ping':
-        await message.channel.send('pong')
-    elif message.content.startswith(str(open("sala.txt", "r").read())):
-        await message.channel.send(str(open("sala.txt", "r").read())+' can you send the maths homework?')
-    elif str(open("sala.txt", "r").read()) in message.content:
-        randomThomas=random.randint(0,len(bot.bigtquotetuple)-1)
-        await message.channel.send(bot.bigtquotetuple[randomThomas])
+    if bot.busy==True:
+        bot.busy=False
     else:
-        if random.randint(0,40)==1:
-            if message.author.id not in bot.bullying:
-                randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
-            else:
-                randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
-            await message.channel.send(randMessage)
+        if message.content.startswith('thanks'):
+            await message.channel.send('no worries')
+        elif message.content.startswith('fuck off') or message.content.startswith('fuck you'):
+            await message.channel.send('no u')
+        elif message.content=='ping':
+            await message.channel.send('pong')
+        elif str(bot.user.id) in message.content:
+            await message.channel.send(str(open("sala.txt", "r").read())+' can you send the maths homework?')
+        elif str(open("sala.txt", "r").read()) in message.content:
+            randomThomas=random.randint(0,len(bot.bigtquotetuple)-1)
+            await message.channel.send(bot.bigtquotetuple[randomThomas])
+        else:
+            if random.randint(0,40)==1:
+                if message.author.id not in bot.bullying:
+                    randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
+                else:
+                    randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
+                await message.channel.send(randMessage)
     
 bot.run(TOKEN)
