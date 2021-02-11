@@ -94,7 +94,6 @@ async def initModVar():
     bot.knobBool=False
 
     #memory constants
-    bot.memoryArray=[]#pos,valu
     bot.memoryNum=['0','1','2','3','4','5','6','7','8','9']
     bot.memoryCommandList=[['2s','2s','3s','4s'],
                  ['4w','1p','1s','1p'],
@@ -112,6 +111,7 @@ async def initModVar():
     bot.memoryReqData=True
     bot.memoryPushPosVal=False
     bot.memoryPosValue=[]
+    bot.memoryArray=[]#pos,valu
 ################################################################################################################################
 @bot.event
 async def Shit(ctx):
@@ -337,38 +337,51 @@ async def Memory(ctx):
                 bot.memoryCurrentCommand=list(bot.memoryCommandList[bot.memoryStage][bot.memoryRequest-1])
                 bot.memoryRequestValue=int(bot.memoryCurrentCommand[0])
                 bot.memoryPhrase=bot.memoryCurrentCommand[1]
-                print(bot.memoryRequestValue,bot.memoryArray)
                 #num,command (s=literal button,w=written on label,p=position pressed in stage <stage>,l=same written label as stage <stage>)
                 if bot.memoryPhrase=='s':#s=literal button
                     memoryOutput='Position '+str(bot.memoryRequestValue)
+                    bot.memoryPosValue=[str(bot.memoryRequestValue),'']
                 elif bot.memoryPhrase=='w':#w=written on label
                     memoryOutput='Label '+str(bot.memoryRequestValue)
+                    bot.memoryPosValue=['',str(bot.memoryRequestValue)]
                 elif bot.memoryPhrase=='p':#p=position pressed in stage <stage>
                     memoryOutput='Position '+bot.memoryArray[bot.memoryRequestValue-1][0]
+                    bot.memoryPosValue=[bot.memoryArray[bot.memoryRequestValue-1][0],'']
                 elif bot.memoryPhrase=='l':#l=same written label as stage <stage>
                     memoryOutput='Label '+bot.memoryArray[bot.memoryRequestValue-1][1]
+                    bot.memoryPosValue=['',bot.memoryArray[bot.memoryRequestValue-1][1]]
                 await ctx.channel.send('```'+memoryOutput+'```')
-                await ctx.channel.send('What is the position and value? (<position><value>)')
-                bot.memoryPushPosVal=True
+                if bot.memoryStage!=4:
+                    if bot.memoryPhrase in ('s','p'):
+                        await ctx.channel.send('What is the value? (<value>)')
+                    else:
+                        await ctx.channel.send('What is the position? (<position>)')
+                        bot.memoryPushPosVal=True
+                else:
+                    await bot.Memory(ctx)
+                    return
             else:
-                bot.memoryPosValue=list(ctx.content)
+                for item in range(0,len(bot.memoryPosValue)):#position,value
+                    if bot.memoryPosValue[item]=='':
+                        bot.memoryPosValue[item]=ctx.content
                 if len(bot.memoryPosValue)!=2:
                     await ctx.channel.send('```bad conditions- restart```')
                     await bot.initModVar()
                     await bot.clearCurrentUser(ctx)
                     return
-                bot.memoryArray.append([bot.memoryPosValue[0],bot.memoryPosValue[1]])
                 bot.memoryStage=bot.memoryStage+1
                 bot.memoryPushPosVal=False
                 bot.memoryReqData=True
+                bot.memoryArray.append(bot.memoryPosValue)
+                await bot.saveCurrentUser(ctx,[bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest,bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase,bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue,bot.memoryArray])
                 await bot.Memory(ctx)
                 return
     else:
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
-    await bot.saveCurrentUser(ctx,[bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest,bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase,bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue])
-
+    await bot.saveCurrentUser(ctx,[bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest,bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase,bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue,bot.memoryArray])
+    return
 def MorseCode():
     'Morse Code'
     leave=False
@@ -631,6 +644,7 @@ async def on_message(message):
                             bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                             bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
                             bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
+                            bot.memoryArray=bot.currentModules[eachUser][11]
                 await bot.runModules(message)
             else:
                 comm[1]=False
