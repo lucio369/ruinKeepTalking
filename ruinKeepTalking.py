@@ -6,6 +6,7 @@ bot=commands.Bot(command_prefix='.')
 @bot.event
 async def init():
     #general
+    bot.num=['0','1','2','3','4','5','6','7','8','9']
     bot.ytzCommands=[['.button',False],
                  ['.compwires',False],
                  ['.help',False],
@@ -324,10 +325,17 @@ def WhosOnFirst():
 async def Memory(ctx):
     if bot.memoryStage<5:
         if bot.memoryReqData==True:
-            await ctx.channel.send('What value is on the display?')
+            await ctx.channel.send('What does the display say?')
             bot.memoryReqData=False
         else:
             if bot.memoryPushPosVal==False:
+                tempList=list(ctx.content)
+                for character in tempList:
+                    if character not in bot.num:
+                        await ctx.channel.send('```bad conditions- restart```')
+                        await bot.initModVar()
+                        await bot.clearCurrentUser(ctx)
+                        return
                 bot.memoryRequest=int(ctx.content)
                 if not (0<bot.memoryRequest<5):
                     await ctx.channel.send('```bad conditions- restart```')
@@ -350,25 +358,38 @@ async def Memory(ctx):
                 elif bot.memoryPhrase=='l':#l=same written label as stage <stage>
                     memoryOutput='Label '+bot.memoryArray[bot.memoryRequestValue-1][1]
                     bot.memoryPosValue=['',bot.memoryArray[bot.memoryRequestValue-1][1]]
-                await ctx.channel.send('```'+memoryOutput+'```')
                 if bot.memoryStage!=4:
                     if bot.memoryPhrase in ('s','p'):
-                        await ctx.channel.send('What is the value? (<value>)')
+                        await ctx.channel.send('''
+```{Output}```
+What does it say now?'''.format(Output=memoryOutput))
                     else:
-                        await ctx.channel.send('What is the position? (<position>)')
-                        bot.memoryPushPosVal=True
+                        await ctx.channel.send('''
+```{Output}```
+What is it's position?'''.format(Output=memoryOutput))
+                    bot.memoryPushPosVal=True
                 else:
+                    await ctx.channel.send('```'+memoryOutput+'```')
+                    bot.memoryStage=bot.memoryStage+1
                     await bot.Memory(ctx)
                     return
             else:
-                for item in range(0,len(bot.memoryPosValue)):#position,value
-                    if bot.memoryPosValue[item]=='':
-                        bot.memoryPosValue[item]=ctx.content
-                if len(bot.memoryPosValue)!=2:
+                tempList=list(ctx.content)
+                for character in tempList:
+                    if character not in bot.num:
+                        await ctx.channel.send('```bad conditions- restart```')
+                        await bot.initModVar()
+                        await bot.clearCurrentUser(ctx)
+                        return
+                bot.memoryRequest=int(ctx.content)
+                if not (0<bot.memoryRequest<5):
                     await ctx.channel.send('```bad conditions- restart```')
                     await bot.initModVar()
                     await bot.clearCurrentUser(ctx)
                     return
+                for item in range(0,len(bot.memoryPosValue)):#position,value
+                    if bot.memoryPosValue[item]=='':
+                        bot.memoryPosValue[item]=ctx.content
                 bot.memoryStage=bot.memoryStage+1
                 bot.memoryPushPosVal=False
                 bot.memoryReqData=True
@@ -605,8 +626,10 @@ async def on_message(message):
     for item in message.attachments:
         attachURLS=attachURLS+item.url+' '
     if attachURLS!=' ~ ':
+        pass
         print(message.author.name+': '+message.content+attachURLS)
     else:
+        pass
         print(message.author.name+': '+message.content)
     if message.author==bot.user:
         return
