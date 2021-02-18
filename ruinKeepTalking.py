@@ -113,6 +113,22 @@ async def initModVar():
     bot.memoryPushPosVal=False
     bot.memoryPosValue=[]
     bot.memoryArray=[]#pos,valu
+
+    #morse constants
+    bot.morseArray=[['a','.-'],['b','-...'],['c','-.-.'],['d','-..'],['e','.'],['f','..-.'],
+                    ['g','--.'],['h','....'],['i','..'],['j','.---'],['k','-.-'],['l','.-..'],
+                    ['m','--'],['n','-.'],['o','---'],['p','.--.'],['q','--.-'],['r','.-.'],
+                    ['s','...'],['t','-'],['u','..-'],['v','...-'],['w','.--'],['x','-..-'],
+                    ['y','-.--'],['z','--..'],['0','-----'],['1','.----'],['2','..---'],['3','...--'],['4','....-'],['5','.....'],
+                    ['6','-....'],['7','--...'],['8','---..'],['9','----.']]
+    bot.wordList=[['shell','3.505'],['halls','3.515'],['slick','3.522'],['trick','3.532'],['boxes','3.535'],['leaks','3.542'],
+                  ['strobe','3.545'],['bistro','3.552'],['flick','3.555'],['bombs','3.565'],['break','3.572'],
+                  ['brick','3.575'],['steak','3.582'],['sting','3.592'],['vector','3.595'],['beats','3.600']]
+
+    #morse variables
+    bot.letterList=[]
+    bot.returnPass=False
+    bot.fail=False
 ################################################################################################################################
 @bot.event
 async def Shit(ctx):
@@ -403,42 +419,48 @@ What is it's position?'''.format(Output=memoryOutput))
         return
     await bot.saveCurrentUser(ctx,[bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest,bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase,bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue,bot.memoryArray])
     return
-def MorseCode():
+
+@bot.event
+async def MorseCode(ctx):
     'Morse Code'
-    leave=False
-    letterList=[]
-    morseArray=[['a','.-'],['b','-...'],['c','-.-.'],['d','-..'],['e','.'],['f','..-.'],
-                ['g','--.'],['h','....'],['i','..'],['j','.---'],['k','-.-'],['l','.-..'],
-                ['m','--'],['n','-.'],['o','---'],['p','.--.'],['q','--.-'],['r','.-.'],
-                ['s','...'],['t','-'],['u','..-'],['v','...-'],['w','.--'],['x','-..-'],
-                ['y','-.--'],['z','--..'],['0','-----'],['1','.----'],['2','..---'],['3','...--'],['4','....-'],['5','.....'],
-                ['6','-....'],['7','--...'],['8','---..'],['9','----.']]
-    wordList=[['shell','3.505'],['halls','3.515'],['slick','3.522'],['trick','3.532'],['boxes','3.535'],['leaks','3.542'],
-              ['strobe','3.545'],['bistro','3.552'],['flick','3.555'],['bombs','3.565'],['break','3.572'],
-              ['brick','3.575'],['steak','3.582'],['sting','3.592'],['vector','3.595'],['beats','3.600']]
-    while leave==False:
-        letter=input('morseCode (.-): ')
-        for i in range(0,len(morseArray)):
-            if morseArray[i][1]==letter:
-                letterList.append(morseArray[i][0])
+    if bot.returnPass==False:
+        bot.returnPass=True
+        await ctx.channel.send('```Send code (.-):```')
+        await bot.saveCurrentUser(ctx,[bot.letterList,bot.returnPass,bot.fail])
+        return
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    for i in range(0,len(bot.morseArray)):
+        if bot.morseArray[i][1]==ctx.content and bot.morseArray[i][1] not in bot.letterList:
+            bot.letterList.append(bot.morseArray[i][0])
+    possWordIndex=[]
+    for i in range(0,len(bot.wordList)):
+        bot.fail=False
+        for j in range(0,len(bot.letterList)):
+            if bot.letterList[j] not in bot.wordList[i][0]:
+                bot.fail=True
+            if j==len(bot.letterList)-1 and bot.fail==False:
+                possWordIndex.append(i)
 
-        possWordIndex=[]
-        for i in range(0,len(wordList)):
-            fail=False
-            for j in range(0,len(letterList)):
-                if letterList[j] not in wordList[i][0]:
-                    fail=True
-                if j==len(letterList)-1 and fail==False:
-                    possWordIndex.append(i)
-
-        if len(possWordIndex)==0:
-            print('Error')
-            leave=True
-        elif len(possWordIndex)>1:
-            print('More letters needed')
-        else:
-            leave=True
-            print(wordList[possWordIndex[0]][0],'| Frequency:',wordList[possWordIndex[0]][1])
+    if len(possWordIndex)==0:
+        await ctx.channel.send('```bad conditions- restart```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    elif len(possWordIndex)>1:
+        temp=''
+        for ind in possWordIndex:
+            temp=temp+bot.wordList[ind][0]+' | Frequency: '+bot.wordList[ind][1]+'\n'
+        await ctx.channel.send('''```{data}
+More needed: ```'''.format(data=temp))
+        await bot.saveCurrentUser(ctx,[bot.letterList,bot.returnPass,bot.fail])
+    else:
+        await ctx.channel.send('```'+bot.wordList[possWordIndex[0]][0]+' | Frequency: '+bot.wordList[possWordIndex[0]][1]+'```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
 
 @bot.event
 async def ComplicatedWires(ctx):
@@ -572,7 +594,7 @@ async def clearCurrentUser(ctx):
     for user in range(0,len(bot.currentModules)):
         if ctx.author.id==bot.currentModules[user][0]:
             bot.currentModules.pop(user)
-            return
+    bot.initModVar()
 
 @bot.event
 async def saveCurrentUser(ctx,parametersToSave):
@@ -581,7 +603,7 @@ async def saveCurrentUser(ctx,parametersToSave):
             bot.currentModules[user]=[ctx.author.id,bot.command]
             for param in parametersToSave:
                 bot.currentModules[user].append(param)
-            return
+    bot.initModVar()
 
 @bot.event
 async def on_ready():
@@ -605,7 +627,7 @@ async def runModules(ctx):
             if comm[0]=='.memory':
                 await bot.Memory(ctx)
             if comm[0]=='.morse':
-                await message.channel.send('In development')
+                await bot.MorseCode(ctx)
             if comm[0]=='.passwords':
                 await message.channel.send('In development')
             if comm[0]=='.simonsays':
@@ -668,6 +690,8 @@ async def on_message(message):
                             bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
                             bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
                             bot.memoryArray=bot.currentModules[eachUser][11]
+                        elif bot.currentModule=='.morse':
+                            bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                 await bot.runModules(message)
             else:
                 comm[1]=False
