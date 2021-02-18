@@ -53,8 +53,14 @@ async def init():
 @bot.event
 async def initModVar():
     #wires variables
-    bot.itCounter=0
-    bot.QAsked=False
+    bot.wiresCounter=0
+    bot.wiresQAsked=False
+
+    #wires constants
+    bot.wiresQuestions=[[['No red?','Cut second wire'],['Last wire is white?','Cut last wire'],['More than one blue wire?','Cut last blue wire'],['None true?','Cut last wire']],
+               [['More than 1 red and last digit of serial odd','Cut last red wire'],['Last wire yellow and no red wires?','Cut first wire'],['Exactly one blue wire?','Cut first wire'],['More than one yellow wire?','Cut last wire'],['None true?','Cut second wire']],
+               [['Last wire black and last digit of serial odd?','Cut fourth wire'],['Exactly one red and more than one yellow?','Cut first wire'],['No black wires?','Cut second wire'],['None true?','Cut first wire']],
+               [['No yellow and last digit of series is odd?','Cut third wire'],['Exactly one yellow and more than one white?','Cut fourth wire'],['No red?','Cut last wire'],['None true?','Cut fourth wire']]]
 
     #button variables
     bot.qIndex=0
@@ -129,6 +135,15 @@ async def initModVar():
     bot.letterList=[]
     bot.returnPass=False
     bot.fail=False
+
+    #password constants
+    bot.passwords=['right','plant','spell','place','point',#0-4
+                'small','study','other','sound','still',#5-9
+                'these','never','their','think','large',#10-14
+                'there','thing','three','house','learn',#15-19
+                'world','great','where','write','first',#20-24
+                'water','which','would','every','found',#25-29
+                'could','below','after','about','again']#30-34
 ################################################################################################################################
 @bot.event
 async def Shit(ctx):
@@ -138,42 +153,45 @@ async def Shit(ctx):
 async def Wires(ctx,noWires):
     'Wires'
     index=noWires-3
-    error=False
-    questions=[[['No red?','Cut second wire'],['Last wire is white?','Cut last wire'],['More than one blue wire?','Cut last blue wire'],['None true?','Cut last wire']],
-               [['More than 1 red and last digit of serial odd','Cut last red wire'],['Last wire yellow and no red wires?','Cut first wire'],['Exactly one blue wire?','Cut first wire'],['More than one yellow wire?','Cut last wire'],['None true?','Cut second wire']],
-               [['Last wire black and last digit of serial odd?','Cut fourth wire'],['Exactly one red and more than one yellow?','Cut first wire'],['No black wires?','Cut second wire'],['None true?','Cut first wire']],
-               [['No yellow and last digit of series is odd?','Cut third wire'],['Exactly one yellow and more than one white?','Cut fourth wire'],['No red?','Cut last wire'],['None true?','Cut fourth wire']]]
-    if bot.QAsked==True:
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    if bot.wiresQAsked==True:
         if ctx.content=='yes':
-            await ctx.channel.send('```'+questions[index][bot.itCounter][1]+'```')
+            await ctx.channel.send('```'+bot.wiresQuestions[index][bot.wiresCounter][1]+'```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
             return
         elif ctx.content=='no':
-            bot.itCounter=bot.itCounter+1
-            bot.QAsked=False
+            bot.wiresCounter=bot.wiresCounter+1
+            bot.wiresQAsked=False
         else:
             await ctx.channel.send('```bad conditions- restart```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
             return
-    if bot.QAsked==False:
-        if index>=len(questions) or index<0:
+    if bot.wiresQAsked==False:
+        if index>=len(bot.wiresQuestions) or index<0:
             await ctx.channel.send('```bad conditions- restart```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
-        elif bot.itCounter==len(questions[index]):
+        elif bot.wiresCounter==len(bot.wiresQuestions[index]):
             await ctx.channel.send('```end of conditions```')
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
         else:
-            await ctx.channel.send(questions[index][bot.itCounter][0])
-            bot.QAsked=True
-    await bot.saveCurrentUser(ctx,[bot.itCounter,bot.QAsked])
+            await ctx.channel.send(bot.wiresQuestions[index][bot.wiresCounter][0])
+            bot.wiresQAsked=True
+    await bot.saveCurrentUser(ctx,[bot.wiresCounter,bot.wiresQAsked])
 
 @bot.event
 async def Button(ctx,colour,word):
     'Button'
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
     if bot.haltButton==True:
         bot.haltButton=False
         if ctx.content=='yes':
@@ -339,6 +357,10 @@ def WhosOnFirst():
             leave=True
 @bot.event
 async def Memory(ctx):
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
     if bot.memoryStage<5:
         if bot.memoryReqData==True:
             await ctx.channel.send('What does the display say?')
@@ -423,14 +445,14 @@ What is it's position?'''.format(Output=memoryOutput))
 @bot.event
 async def MorseCode(ctx):
     'Morse Code'
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
     if bot.returnPass==False:
         bot.returnPass=True
         await ctx.channel.send('```Send code (.-):```')
         await bot.saveCurrentUser(ctx,[bot.letterList,bot.returnPass,bot.fail])
-        return
-    if ctx.content=='exit':
-        await bot.initModVar()
-        await bot.clearCurrentUser(ctx)
         return
     for i in range(0,len(bot.morseArray)):
         if bot.morseArray[i][1]==ctx.content and bot.morseArray[i][1] not in bot.letterList:
@@ -464,6 +486,10 @@ More needed: ```'''.format(data=temp))
 
 @bot.event
 async def ComplicatedWires(ctx):
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
     if bot.cWIndex<len(bot.cWQuestions):
         if bot.cWQAsked==False:
             await ctx.channel.send(bot.cWQuestions[bot.cWIndex][0]+'?')
@@ -526,37 +552,15 @@ def WireSequences():
 
 def Passwords():
     'Passwords'
-    passwords=['right','plant','spell','place','point',#0-4
-                'small','study','other','sound','still',#5-9
-                'these','never','their','think','large',#10-14
-                'there','thing','three','house','learn',#15-19
-                'world','great','where','write','first',#20-24
-                'water','which','would','every','found',#25-29
-                'could','below','after','about','again']#30-34
+    return
 
-    tempPasswords=['right','plant','spell','place','point',#0-4
-                'small','study','other','sound','still',#5-9
-                'these','never','their','think','large',#10-14
-                'there','thing','three','house','learn',#15-19
-                'world','great','where','write','first',#20-24
-                'water','which','would','every','found',#25-29
-                'could','below','after','about','again']#30-34
-    leave=False
-    emptInput=input()
-    index=0
-    passIndexes=[]
-    count0=count1=0
-    while leave==False:#loop
-        while count0<(len(emptInput)-1):#every input item
-            count0=count0+1
-            count1=0
-            while count1<(len(passwords)-1):#every password item
-                print(emptInput[count0])
-                print(passwords[count1])
-                print('-----------------------------------------------------------------')
-                count1=count1+1
+
 @bot.event
 async def Knobs(ctx):
+    if ctx.content=='exit':
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
     passed=False
     if bot.knobBool==False:
         await ctx.channel.send('Enter the configuration (Twelve bits)')
@@ -594,7 +598,7 @@ async def clearCurrentUser(ctx):
     for user in range(0,len(bot.currentModules)):
         if ctx.author.id==bot.currentModules[user][0]:
             bot.currentModules.pop(user)
-    bot.initModVar()
+    await bot.initModVar()
 
 @bot.event
 async def saveCurrentUser(ctx,parametersToSave):
@@ -603,7 +607,7 @@ async def saveCurrentUser(ctx,parametersToSave):
             bot.currentModules[user]=[ctx.author.id,bot.command]
             for param in parametersToSave:
                 bot.currentModules[user].append(param)
-    bot.initModVar()
+    await bot.initModVar()
 
 @bot.event
 async def on_ready():
@@ -682,7 +686,7 @@ async def on_message(message):
                         if bot.currentModule=='.button':
                             bot.haltButton,bot.holdButton,bot.qIndex=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.wires':
-                            bot.itCounter,bot.QAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
+                            bot.wiresCounter,bot.wiresQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
                         elif bot.currentModule=='.compwires':
                             bot.situation,bot.cWIndex,bot.cWQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.memory':
