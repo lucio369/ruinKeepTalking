@@ -22,15 +22,16 @@ async def init():
     bot.freshUser=True
     bot.currentModule=''
     bot.params=[]
-    bot.bigtquotetuple=('Wanna go on GTA?','oi','mum has taken my phone and ipad','do you mind if you can send me Gricias hw and the first section of isaac physics please?','thanks bro ❤',
-    "this is the first time we've both been on at the same time and we said that we'd both play GTA?",'speaking of which...wanna play?',"kl",'fuck cs, rooski game',
-    "I'm not shit, I just don't like how intense it is.",'I prefer casual games',"this is the first time we've both been on at the same time and we said that we'd both play GTA?")
-    bot.bullying=eval(open("bullyingFile.txt", "r").read())
-    bot.genMessage=['https://media.discordapp.net/attachments/663457975813275675/756241309496377414/tumblr_m7qou3Xlgi1qap9uuo1_500.gif',
-                    '<:WeirdChamp:765501746951749642> You better not be like this on the road trip',
-                    'Yoonkook = yoongi + jungkook',
-                    '```nonce```']
-    bot.bullyIndex=0
+    try:
+        import hajiBajiPrivate
+        bot.personalFile=True
+        bot.bigtquotetuple=hajiBajiPrivate.bigtquotetuple
+        bot.bullying=hajiBajiPrivate.bullying
+        bot.genMessage=hajiBajiPrivate.genMessage
+        bot.conditionCheck=hajiBajiPrivate.conditionCheck
+        
+    except ModuleNotFoundError:
+        bot.personalFile=False
     bot.currentChannel=''
     bot.switchChannelOutput='''
 ===============================================================================
@@ -48,7 +49,7 @@ async def init():
     Wire Sequences     decides which wires to cut based off user input | .wireseq
     Passwords          figures out which word is the password from given characters | .passwords
     Knobs              outputs direction from given 12 bit number | .knobs
-    Help               does this shit```'''
+    Help               does this```'''
     await bot.initModVar()
 @bot.event
 async def initModVar():
@@ -146,7 +147,7 @@ async def initModVar():
                 'could','below','after','about','again']#30-34
 ################################################################################################################################
 @bot.event
-async def Shit(ctx):
+async def Help(ctx):
     await ctx.channel.send(bot.helpContent)
     await bot.clearCurrentUser(ctx)
 @bot.event
@@ -625,7 +626,7 @@ async def runModules(ctx):
             if comm[0]=='.compwires':
                 await bot.ComplicatedWires(ctx)
             if comm[0]=='.help':
-                await bot.Shit(ctx)
+                await bot.Help(ctx)
             if comm[0]=='.knobs':
                 await bot.Knobs(ctx)
             if comm[0]=='.memory':
@@ -702,23 +703,24 @@ async def on_message(message):
     if bot.busy==True:
         bot.busy=False
     else:
-        if message.content.startswith('thanks'):
-            await message.channel.send('no worries')
-        elif message.content.startswith('fuck off') or message.content.startswith('fuck you'):
-            await message.channel.send('no u')
-        elif message.content=='ping':
-            await message.channel.send('pong')
-        elif str(bot.user.id) in message.content:
-            await message.channel.send(str(open("sala.txt", "r").read())+' can you send the maths homework?')
-        elif str(open("sala.txt", "r").read()) in message.content:
-            randomThomas=random.randint(0,len(bot.bigtquotetuple)-1)
-            await message.channel.send(bot.bigtquotetuple[randomThomas])
-        else:
-            if random.randint(0,40)==1:
-                if message.author.id not in bot.bullying:
-                    randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
-                else:
-                    randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
-                await message.channel.send(randMessage)
+        if bot.personalFile==True:
+            if message.content.startswith(bot.conditionCheck[0][0]):
+                await message.channel.send(bot.conditionCheck[0][1])
+            elif message.content.startswith(bot.conditionCheck[1][0]) or message.content.startswith(bot.conditionCheck[2][0]):
+                await message.channel.send(bot.conditionCheck[1][1])
+            elif message.content==bot.conditionCheck[3][0]:
+                await message.channel.send(bot.conditionCheck[3][1])
+            elif str(bot.user.id) in message.content:
+                await message.channel.send(bot.conditionCheck[4])
+            elif bot.conditionCheck[5] in message.content:
+                randomMess=random.randint(0,len(bot.bigtquotetuple)-1)
+                await message.channel.send(bot.bigtquotetuple[randomMess])
+            else:
+                if random.randint(0,40)==1:
+                    if message.author.id not in bot.bullying:
+                        randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
+                    else:
+                        randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
+                    await message.channel.send(randMessage)
 
 bot.run(TOKEN)
