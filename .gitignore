@@ -1,11 +1,11 @@
 tokenFile.txt
 bullyingFile.txt
 sala.txt
-ruinKeepTalking.exe
-thomas.ico
+theManual.exe
+botPFP.ico
 /prevVersions
 /__pycache__
 /build
 /dist
-ruinKeepTalking.spec
-refreshEXE.exe
+manualToEXE.py
+theManual.spec
