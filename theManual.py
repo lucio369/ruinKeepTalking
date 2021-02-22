@@ -29,7 +29,7 @@ async def init():
         bot.bullying=hajiBajiPrivate.bullying
         bot.genMessage=hajiBajiPrivate.genMessage
         bot.conditionCheck=hajiBajiPrivate.conditionCheck
-        
+
     except ModuleNotFoundError:
         bot.personalFile=False
     bot.currentChannel=''
@@ -132,19 +132,21 @@ async def initModVar():
                   ['strobe','3.545'],['bistro','3.552'],['flick','3.555'],['bombs','3.565'],['break','3.572'],
                   ['brick','3.575'],['steak','3.582'],['sting','3.592'],['vector','3.595'],['beats','3.600']]
 
-    #morse variables
-    bot.letterList=[]
-    bot.returnPass=False
-    bot.fail=False
+    #password variables
+    bot.passwordsFirstPass=False
+    bot.passwordsRowIndex=0
+    bot.passContent=[[],[],[],[],[]]
+    bot.passwords=[[1,'right',2],[3,'plant',4],[5,'spell',6],[7,'place',-1],[-1,'point',-1],#0-4
+                   [-1,'small',8],[9,'study',10],[11,'other',-1],[-1,'sound',-1],[-1,'still',-1],#5-9
+                   [12,'these',13],[14,'never',-1],[-1,'their',15],[16,'think',17],[18,'large',19],#10-14
+                   [-1,'there',-1],[-1,'thing',-1],[-1,'three',20],[21,'house',-1],[-1,'learn',-1],#15-19
+                   [22,'world',23],[24,'great',-1],[25,'where',26],[27,'write',-1],[28,'first',29],#20-24
+                   [-1,'water',-1],[-1,'which',-1],[-1,'would',-1],[30,'every',-1],[-1,'found',-1],#25-29
+                   [31,'could',-1],[32,'below',-1],[33,'after',34],[-1,'about',-1],[-1,'again',-1]]#30-34
+    bot.passwordsRowInput=True
+    bot.passwordTraversing=False
+    bot.passwordIndex=0
 
-    #password constants
-    bot.passwords=['right','plant','spell','place','point',#0-4
-                'small','study','other','sound','still',#5-9
-                'these','never','their','think','large',#10-14
-                'there','thing','three','house','learn',#15-19
-                'world','great','where','write','first',#20-24
-                'water','which','would','every','found',#25-29
-                'could','below','after','about','again']#30-34
 ################################################################################################################################
 @bot.event
 async def Help(ctx):
@@ -551,9 +553,35 @@ def WireSequences():
             if input('leave? ')=='y':
                 leave=True
 
-def Passwords():
+@bot.event
+async def Passwords(ctx):
     'Passwords'
-    return
+    if bot.passwordsRowIndex<5:
+        if bot.passwordsRowInput==True:
+            bot.passContent[bot.passwordsRowIndex]=list(ctx.content)
+            tempIndexes=[]
+            for tempCharacter in bot.passContent[bot.passwordsRowIndex]:#every character in current row
+                bot.passwordTraversing=True
+                while bot.passwordTraversing==True:
+                    if tempCharacter==list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
+                        if tempCharacter not in tempIndexes:
+                                tempIndexes.append(tempCharacter)
+                    elif tempCharacter<list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
+                        if bot.passwords[passwordIndex][0]==-1:
+                            bot.passwordTraversing=False
+                        bot.passwordIndex=bot.passwords[passwordIndex][0]
+                    elif tempCharacter>list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
+                        if bot.passwords[passwordIndex][2]==-1:
+                            bot.passwordTraversing=False
+                        bot.passwordIndex=bot.passwords[passwordIndex][2]
+            for index in tempIndexes:
+                #remove unncecessary pointers
+        else:
+            bot.passwordsRowIndex=True
+            ctx.channel.send('send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>')
+    else:
+        pass
+        #exit
 
 
 @bot.event
@@ -613,8 +641,8 @@ async def saveCurrentUser(ctx,parametersToSave):
 @bot.event
 async def on_ready():
     await bot.init()
-    print("Now copying Thomas")
-    await bot.change_presence(activity=discord.Activity(name="Australian and Canadian women", type=3))
+    print("Ready to go")
+    await bot.change_presence(activity=discord.Activity(name='and waiting', type=3))
 
 @bot.event
 async def runModules(ctx):
