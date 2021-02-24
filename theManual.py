@@ -145,7 +145,9 @@ async def initModVar():
                    [31,'could',-1],[32,'below',-1],[33,'after',34],[-1,'about',-1],[-1,'again',-1]]#30-34
     bot.passwordsRowInput=True
     bot.passwordTraversing=False
-    bot.passwordIndex=0
+    bot.passwordRootIndex=0
+    bot.passwordIndex=bot.rootIndex
+
 
 ################################################################################################################################
 @bot.event
@@ -562,20 +564,26 @@ async def Passwords(ctx):
             tempIndexes=[]
             for tempCharacter in bot.passContent[bot.passwordsRowIndex]:#every character in current row
                 bot.passwordTraversing=True
-                while bot.passwordTraversing==True:
+                while bot.passwordTraversing:
                     if tempCharacter==list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
                         if tempCharacter not in tempIndexes:
                                 tempIndexes.append(tempCharacter)
                     elif tempCharacter<list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
-                        if bot.passwords[passwordIndex][0]==-1:
+                        if bot.passwords[bot.passwordIndex][0]==-1:
                             bot.passwordTraversing=False
                         bot.passwordIndex=bot.passwords[passwordIndex][0]
                     elif tempCharacter>list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
                         if bot.passwords[passwordIndex][2]==-1:
                             bot.passwordTraversing=False
                         bot.passwordIndex=bot.passwords[passwordIndex][2]
-            for index in tempIndexes:
-                #remove unncecessary pointers
+            bot.passwordIndex=bot.passwordRootIndex
+            for node in range(0,len(bot.passwords)):
+                if (node==bot.passwordRootIndex) and bot.passwordIndex not in tempIndexes:#root not in list
+                    await bot.removeTreeItem('root',bot.passwordRootIndex)
+                elif bot.passwords[node][0] not in tempIndexes:
+                    await bot.removeTreeItem('left',bot.passwords[node][0])
+                elif bot.passwords[node][2] not in tempIndexes:
+                    await bot.removeTreeItem('right',bot.passwords[node][2])
         else:
             bot.passwordsRowIndex=True
             ctx.channel.send('send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>')
@@ -583,6 +591,34 @@ async def Passwords(ctx):
         pass
         #exit
 
+@bot.event
+async def removeTreeItem(message,index):#index is the node we want gone.
+    bot.traversing=True
+    leftRCounter=[0,index]
+    rightLCounter=[0,index]
+
+    while bot.traversing:#looking through the children of index to see how far they go to elect the better place to store nodes
+        if bot.passwords[leftRCounter[1]][2]!=-1:
+            leftRCounter=[leftRCounter+1,bot.passwords[leftRCounter[1]][2]]
+        else:
+            bot.traversing=False
+        if bot.passwords[rightLCounter[1]][0]!=-1:
+            rightLCounter=[rightLCounter+1,bot.passwords[rightLCounter[1]][0]]
+        else:
+            bot.traversing=False
+
+    if bot.leftRCounter[0]<bot.rightLCounter[0]:#assign right tree under left tree
+        bot.passwords[bot.leftRCounter[1]][2]=bot.passwords[index][2]
+        if index==bot.passwordRootIndex:
+            bot.passwordRootIndex=bot.passwords[bot.passwordIndex][0]
+            return
+    else:#assign left tree under right tree
+        bot.passwords[bot.rightLCounter[1]][0]=bot.passwords[index][0]
+        if index==bot.passwordRootIndex:
+            bot.passwordRootIndex=bot.passwords[bot.passwordIndex][2]
+            return
+        bot.passwords[bot.passwordIndex][0]=
+    #change node pointing to deleted node where appropriate
 
 @bot.event
 async def Knobs(ctx):
