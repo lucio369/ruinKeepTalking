@@ -143,10 +143,11 @@ async def initModVar():
                    [22,'world',23],[24,'great',-1],[25,'where',26],[27,'write',-1],[28,'first',29],#20-24
                    [-1,'water',-1],[-1,'which',-1],[-1,'would',-1],[30,'every',-1],[-1,'found',-1],#25-29
                    [31,'could',-1],[32,'below',-1],[33,'after',34],[-1,'about',-1],[-1,'again',-1]]#30-34
-    bot.passwordsRowInput=True
+    bot.passwordsRowInput=False
     bot.passwordTraversing=False
     bot.passwordRootIndex=0
-    bot.passwordIndex=bot.rootIndex
+    bot.passwordIndex=bot.passwordRootIndex
+    bot.passwordTempBranch=''
 
 
 ################################################################################################################################
@@ -558,66 +559,100 @@ def WireSequences():
 @bot.event
 async def Passwords(ctx):
     'Passwords'
-    if bot.passwordsRowIndex<5:
-        if bot.passwordsRowInput==True:
-            bot.passContent[bot.passwordsRowIndex]=list(ctx.content)
-            tempIndexes=[]
-            for tempCharacter in bot.passContent[bot.passwordsRowIndex]:#every character in current row
-                bot.passwordTraversing=True
-                while bot.passwordTraversing:
-                    if tempCharacter==list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
-                        if tempCharacter not in tempIndexes:
-                                tempIndexes.append(tempCharacter)
-                    elif tempCharacter<list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
-                        if bot.passwords[bot.passwordIndex][0]==-1:
-                            bot.passwordTraversing=False
-                        bot.passwordIndex=bot.passwords[passwordIndex][0]
-                    elif tempCharacter>list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:
-                        if bot.passwords[passwordIndex][2]==-1:
-                            bot.passwordTraversing=False
-                        bot.passwordIndex=bot.passwords[passwordIndex][2]
-            bot.passwordIndex=bot.passwordRootIndex
-            for node in range(0,len(bot.passwords)):
-                if (node==bot.passwordRootIndex) and bot.passwordIndex not in tempIndexes:#root not in list
-                    await bot.removeTreeItem('root',bot.passwordRootIndex)
-                elif bot.passwords[node][0] not in tempIndexes:
-                    await bot.removeTreeItem('left',bot.passwords[node][0])
-                elif bot.passwords[node][2] not in tempIndexes:
-                    await bot.removeTreeItem('right',bot.passwords[node][2])
+    if bot.passwordsRowInput==False:
+        await ctx.channel.send('send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>')
+        bot.passwordsRowInput=True
+    elif bot.passwordsRowIndex<5:
+        bot.passContent[bot.passwordsRowIndex]=list(ctx.content)
+        tempIndexes=[]
+        for tempCharacter in bot.passContent[bot.passwordsRowIndex]:#every character in current row
+            bot.passwordTraversing=True
+            while bot.passwordTraversing:
+                if tempCharacter==list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:#if possible, record that...then what?
+                    if tempCharacter not in tempIndexes:#if already recorded
+                            tempIndexes.append(tempCharacter)
+                if tempCharacter<list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex] or tempCharacter in list(bot.passwords[bot.passwords[bot.passwordIndex][0]][1])[bot.passwordsRowIndex]:#if could be left
+                    if bot.passwords[bot.passwordIndex][0]==-1:
+                        bot.passwordTraversing=False
+                    bot.passwordIndex=bot.passwords[bot.passwordIndex][0]
+                elif tempCharacter>list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex] or tempCharacter in list(bot.passwords[bot.passwords[bot.passwordIndex][2]][1])[bot.passwordsRowIndex]:#if could be right
+                    if bot.passwords[bot.passwordIndex][2]==-1:
+                        bot.passwordTraversing=False
+                    bot.passwordIndex=bot.passwords[bot.passwordIndex][2]
+                else:
+                    bot.passwordTraversing=False
+        bot.passwordIndex=bot.passwordRootIndex
+        tempList=[]
+        for node in range(0,len(bot.passwords)):#removes invalid passwords and records valid bois
+            if (node==bot.passwordRootIndex) and bot.passwordIndex not in tempIndexes:#root not in list
+                await bot.removeTreeItem(bot.passwordRootIndex)
+            elif bot.passwords[node][0] not in tempIndexes and bot.passwords[node][0]!=-1:
+                await bot.removeTreeItem(bot.passwords[node][0])
+            elif bot.passwords[node][2] not in tempIndexes and bot.passwords[node][2]!=-1:
+                await bot.removeTreeItem(bot.passwords[node][2])
+            if bot.passwordTempBranch=='left':
+                if bot.passwordRootIndex==node:
+                    bot.passwordsRootIndex=bot.passwords[node][0]
+                else:
+                    bot.passwords[node][2]=-1
+            elif bot.passwordTempBranch=='right':
+                if bot.passwordRootIndex==node:
+                    bot.passwordsRootIndex=bot.passwords[node][2]
+                else:
+                    bot.passwords[node][0]=-1
+            else:#if in list
+                if node in tempIndexes:
+                    tempList=tempList+bot.passwords
+            bot.passwordTempBranch=''
+        print(tempList)
+        if len(tempList)<1:
+            tempString=''
+            for item in tempList:
+                tempString=tempString+item+'/n'
+            await ctx.channel.send('''```
+Potencial words:
+{aList}
+{message}```'''.format(aList=tempString,message='send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>'))
+        elif len(tempList)==0:
+            await ctx.channel.send('```bad conditions- restart```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
         else:
-            bot.passwordsRowIndex=True
-            ctx.channel.send('send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>')
+            ctx.channel.send('''```Your answer is: {aList}```'''.format(aList=tempList))
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+        bot.passwordsRowIndex=bot.passwordsRowIndex+1
     else:
-        pass
-        #exit
+        await ctx.channel.send('```bad conditions- restart```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    await bot.saveCurrentUser(ctx,[bot.passwordsFirstPass,bot.passwordsRowIndex,bot.passContent,bot.passwords,bot.passwordsRowInput,bot.passwordTraversing,bot.passwordRootIndex,bot.passwordIndex,bot.passwordTempBranch])
 
 @bot.event
-async def removeTreeItem(message,index):#index is the node we want gone.
+async def removeTreeItem(index):#index is index for the node we want gone.
     bot.traversing=True
     leftRCounter=[0,index]
     rightLCounter=[0,index]
 
     while bot.traversing:#looking through the children of index to see how far they go to elect the better place to store nodes
         if bot.passwords[leftRCounter[1]][2]!=-1:
-            leftRCounter=[leftRCounter+1,bot.passwords[leftRCounter[1]][2]]
-        else:
+            leftRCounter=[leftRCounter[0]+1,bot.passwords[leftRCounter[1]][2]]
+        else:#gets to bottom of left tree
             bot.traversing=False
         if bot.passwords[rightLCounter[1]][0]!=-1:
-            rightLCounter=[rightLCounter+1,bot.passwords[rightLCounter[1]][0]]
-        else:
+            rightLCounter=[rightLCounter[0]+1,bot.passwords[rightLCounter[1]][0]]
+        else:#gets to bottom of right tree
             bot.traversing=False
 
-    if bot.leftRCounter[0]<bot.rightLCounter[0]:#assign right tree under left tree
-        bot.passwords[bot.leftRCounter[1]][2]=bot.passwords[index][2]
-        if index==bot.passwordRootIndex:
-            bot.passwordRootIndex=bot.passwords[bot.passwordIndex][0]
-            return
+    if leftRCounter[0]<rightLCounter[0]:#assign right tree under left tree
+        bot.passwords[leftRCounter[1]][2]=bot.passwords[index][2]
+        bot.passwordTempBranch='left'
     else:#assign left tree under right tree
-        bot.passwords[bot.rightLCounter[1]][0]=bot.passwords[index][0]
-        if index==bot.passwordRootIndex:
-            bot.passwordRootIndex=bot.passwords[bot.passwordIndex][2]
-            return
-        bot.passwords[bot.passwordIndex][0]=
+        bot.passwords[rightLCounter[1]][0]=bot.passwords[index][0]
+        bot.passwordTempBranch='right'
     #change node pointing to deleted node where appropriate
 
 @bot.event
@@ -698,15 +733,15 @@ async def runModules(ctx):
             if comm[0]=='.morse':
                 await bot.MorseCode(ctx)
             if comm[0]=='.passwords':
-                await message.channel.send('In development')
+                await bot.Passwords(ctx)
             if comm[0]=='.simonsays':
-                await message.channel.send('In development')
+                await ctx.channel.send('In development')
             if comm[0]=='.whosonfirst':
-                await message.channel.send('In development')
+                await ctx.channel.send('In development')
             if comm[0]=='.wires':
                 await bot.Wires(ctx,int(bot.params[0]))
             if comm[0]=='.wireseq':
-                await message.channel.send('In development')
+                await ctx.channel.send('In development')
 @bot.event
 async def on_message(message):
     message.content=message.content.lower()
@@ -761,6 +796,10 @@ async def on_message(message):
                             bot.memoryArray=bot.currentModules[eachUser][11]
                         elif bot.currentModule=='.morse':
                             bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                        elif bot.currentModule=='.passwords':
+                            bot.passwordsFirstPass,bot.passwordsRowIndex,bot.passContent=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                            bot.passwords,bot.passwordsRowInput,bot.passwordTraversing=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
+                            bot.passwordRootIndex,bot.passwordIndex,bot.passwordTempBranch=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
                 await bot.runModules(message)
             else:
                 comm[1]=False
