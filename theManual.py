@@ -132,22 +132,132 @@ async def initModVar():
                   ['strobe','3.545'],['bistro','3.552'],['flick','3.555'],['bombs','3.565'],['break','3.572'],
                   ['brick','3.575'],['steak','3.582'],['sting','3.592'],['vector','3.595'],['beats','3.600']]
 
+    #passwords constants
+    class passNode:
+        def __init__(self,data):
+            self.left=None
+            self.right=None
+            self.data=data
+
+        def insert(self,data):
+            if self.data:
+                if data<self.data:
+                    if self.left==None:
+                        self.left=passNode(data)
+                    else:
+                        self.left.insert(data)
+                elif data>self.data:
+                    if self.right==None:
+                        self.right=passNode(data)
+                    else:
+                        self.right.insert(data)
+            else:
+                self.data=data
+
+        def delete(self,target):#all but root
+            if self.data:
+                if self.data<target:
+                    if self.right:
+                        if self.right.data==target:
+                            self.right=self.right.deleteType()
+                            return True
+                        else:
+                            return self.right.delete(target)
+                elif self.data>target:
+                    if self.left:
+                        if self.left.data==target:
+                            self.left=self.left.deleteType()
+                            return True
+                        else:
+                            return self.left.delete(target)
+                elif self.data==target:#is root?
+                    self.data=self.deleteType()
+                    return (self.left,self.data,self.right)
+            return False
+
+
+        def deleteType(self):
+            if self.left==None and self.right==None:#mark None
+                print('leaf')
+                return None
+            elif self.left and self.right:#replace content
+                print('two children')
+                traversing=True
+                lParent=rParent=None
+                tempLeft=self.left
+                tempRight=self.right
+                while traversing:
+                    if tempLeft.right:
+                        lParent=tempLeft
+                        tempLeft=tempLeft.right
+                    if tempRight.left:
+                        rParent=tempRight
+                        tempRight=tempRight.left
+                    if not (tempLeft.right or tempRight.left):
+                        traversing=False
+                if tempLeft.data<tempRight.data:
+                    if lParent:
+                        lParent.right=None
+                    return tempLeft.data
+                else:
+                    if rParent:
+                        rParent.left=None
+                    return tempRight.data
+            elif self.left:#replace node
+                print('left child')
+                return self.left
+            else:#replace node
+                print('right child')
+                return self.right
+
+        def searchTree(self,target):
+            print('traversed to',self.data)
+            if self.data:
+                if self.data==target:
+                    return 'Found'
+                elif self.data>target:
+                    if self.left:
+                        if self.left.searchTree:
+                            return self.left.searchTree(target)
+                else:
+                    if self.right:
+                        if self.right.searchTree:
+                            return self.right.searchTree(target)
+            return None
+
+        def outputTree(self):
+            if self.left:
+                self.left.outputTree()
+            print(self.data)
+            if self.right:
+                self.right.outputTree()
+
     #password variables
-    bot.passwordsFirstPass=False
-    bot.passwordsRowIndex=0
-    bot.passContent=[[],[],[],[],[]]
-    bot.passwords=[[1,'right',2],[3,'plant',4],[5,'spell',6],[7,'place',-1],[-1,'point',-1],#0-4
-                   [-1,'small',8],[9,'study',10],[11,'other',-1],[-1,'sound',-1],[-1,'still',-1],#5-9
-                   [12,'these',13],[14,'never',-1],[-1,'their',15],[16,'think',17],[18,'large',19],#10-14
-                   [-1,'there',-1],[-1,'thing',-1],[-1,'three',20],[21,'house',-1],[-1,'learn',-1],#15-19
-                   [22,'world',23],[24,'great',-1],[25,'where',26],[27,'write',-1],[28,'first',29],#20-24
-                   [-1,'water',-1],[-1,'which',-1],[-1,'would',-1],[30,'every',-1],[-1,'found',-1],#25-29
-                   [31,'could',-1],[32,'below',-1],[33,'after',34],[-1,'about',-1],[-1,'again',-1]]#30-34
-    bot.passwordsRowInput=False
-    bot.passwordTraversing=False
-    bot.passwordRootIndex=0
-    bot.passwordIndex=bot.passwordRootIndex
-    bot.passwordTempBranch=''
+    bot.passwords=['right', 'plant', 'spell', 'place', 'point',
+                   'small', 'study', 'other', 'sound', 'still',
+                   'these', 'never', 'their', 'think', 'large',
+                   'there', 'thing', 'three', 'house', 'learn',
+                   'world', 'great', 'where', 'write', 'first',
+                   'water', 'which', 'would', 'every', 'found',
+                   'could', 'below', 'after', 'about', 'again']
+    bot.passRoot=passNode(bot.passwords[0])
+    for password in bot.passwords:
+        bot.passRoot.insert(password)
+    while True:
+        if bot.passRoot.searchTree(input('search for item: ').lower())=='Found':
+            print('Found')
+        else:
+            print('Not found')
+        temp=bot.passRoot.delete(input('input item you want removed: ').lower())
+        if temp==True:
+            print('Deleted')
+        elif type(temp) is bool:
+            print('Not deleted')
+        else:
+            bot.passRoot.left,bot.passRoot.data,bot.passRoot.right=temp
+            print('Root deleted')
+
+
 
 
 ################################################################################################################################
@@ -559,101 +669,7 @@ def WireSequences():
 @bot.event
 async def Passwords(ctx):
     'Passwords'
-    if bot.passwordsRowInput==False:
-        await ctx.channel.send('send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>')
-        bot.passwordsRowInput=True
-    elif bot.passwordsRowIndex<5:
-        bot.passContent[bot.passwordsRowIndex]=list(ctx.content)
-        tempIndexes=[]
-        for tempCharacter in bot.passContent[bot.passwordsRowIndex]:#every character in current row
-            bot.passwordTraversing=True
-            while bot.passwordTraversing:
-                if tempCharacter==list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex]:#if possible, record that...then what?
-                    if tempCharacter not in tempIndexes:#if already recorded
-                            tempIndexes.append(tempCharacter)
-                if tempCharacter<list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex] or tempCharacter in list(bot.passwords[bot.passwords[bot.passwordIndex][0]][1])[bot.passwordsRowIndex]:#if could be left
-                    if bot.passwords[bot.passwordIndex][0]==-1:
-                        bot.passwordTraversing=False
-                    bot.passwordIndex=bot.passwords[bot.passwordIndex][0]
-                elif tempCharacter>list(bot.passwords[bot.passwordIndex][1])[bot.passwordsRowIndex] or tempCharacter in list(bot.passwords[bot.passwords[bot.passwordIndex][2]][1])[bot.passwordsRowIndex]:#if could be right
-                    if bot.passwords[bot.passwordIndex][2]==-1:
-                        bot.passwordTraversing=False
-                    bot.passwordIndex=bot.passwords[bot.passwordIndex][2]
-                else:
-                    bot.passwordTraversing=False
-        bot.passwordIndex=bot.passwordRootIndex
-        tempList=[]
-        for node in range(0,len(bot.passwords)):#removes invalid passwords and records valid bois
-            if (node==bot.passwordRootIndex) and bot.passwordIndex not in tempIndexes:#root not in list
-                await bot.removeTreeItem(bot.passwordRootIndex)
-            elif bot.passwords[node][0] not in tempIndexes and bot.passwords[node][0]!=-1:
-                await bot.removeTreeItem(bot.passwords[node][0])
-            elif bot.passwords[node][2] not in tempIndexes and bot.passwords[node][2]!=-1:
-                await bot.removeTreeItem(bot.passwords[node][2])
-            if bot.passwordTempBranch=='left':
-                if bot.passwordRootIndex==node:
-                    bot.passwordsRootIndex=bot.passwords[node][0]
-                else:
-                    bot.passwords[node][2]=-1
-            elif bot.passwordTempBranch=='right':
-                if bot.passwordRootIndex==node:
-                    bot.passwordsRootIndex=bot.passwords[node][2]
-                else:
-                    bot.passwords[node][0]=-1
-            else:#if in list
-                if node in tempIndexes:
-                    tempList=tempList+bot.passwords
-            bot.passwordTempBranch=''
-        print(tempList)
-        if len(tempList)<1:
-            tempString=''
-            for item in tempList:
-                tempString=tempString+item+'/n'
-            await ctx.channel.send('''```
-Potencial words:
-{aList}
-{message}```'''.format(aList=tempString,message='send all the characters in column '+str(bot.passwordsRowIndex+1)+': <char1><char2><etc.>'))
-        elif len(tempList)==0:
-            await ctx.channel.send('```bad conditions- restart```')
-            await bot.initModVar()
-            await bot.clearCurrentUser(ctx)
-            return
-        else:
-            ctx.channel.send('''```Your answer is: {aList}```'''.format(aList=tempList))
-            await bot.initModVar()
-            await bot.clearCurrentUser(ctx)
-            return
-        bot.passwordsRowIndex=bot.passwordsRowIndex+1
-    else:
-        await ctx.channel.send('```bad conditions- restart```')
-        await bot.initModVar()
-        await bot.clearCurrentUser(ctx)
-        return
-    await bot.saveCurrentUser(ctx,[bot.passwordsFirstPass,bot.passwordsRowIndex,bot.passContent,bot.passwords,bot.passwordsRowInput,bot.passwordTraversing,bot.passwordRootIndex,bot.passwordIndex,bot.passwordTempBranch])
 
-@bot.event
-async def removeTreeItem(index):#index is index for the node we want gone.
-    bot.traversing=True
-    leftRCounter=[0,index]
-    rightLCounter=[0,index]
-
-    while bot.traversing:#looking through the children of index to see how far they go to elect the better place to store nodes
-        if bot.passwords[leftRCounter[1]][2]!=-1:
-            leftRCounter=[leftRCounter[0]+1,bot.passwords[leftRCounter[1]][2]]
-        else:#gets to bottom of left tree
-            bot.traversing=False
-        if bot.passwords[rightLCounter[1]][0]!=-1:
-            rightLCounter=[rightLCounter[0]+1,bot.passwords[rightLCounter[1]][0]]
-        else:#gets to bottom of right tree
-            bot.traversing=False
-
-    if leftRCounter[0]<rightLCounter[0]:#assign right tree under left tree
-        bot.passwords[leftRCounter[1]][2]=bot.passwords[index][2]
-        bot.passwordTempBranch='left'
-    else:#assign left tree under right tree
-        bot.passwords[rightLCounter[1]][0]=bot.passwords[index][0]
-        bot.passwordTempBranch='right'
-    #change node pointing to deleted node where appropriate
 
 @bot.event
 async def Knobs(ctx):
