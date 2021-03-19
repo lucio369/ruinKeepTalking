@@ -47,7 +47,7 @@ async def init():
     Morse Code         works out valid word and frequency encoded in morse | .morse
     Complicated Wires  responds correct response for each wire based off user input | .compWires
     Wire Sequences     decides which wires to cut based off user input | .wireseq
-    Passwords          figures out which word is the password from given characters | .passwords
+    Passwords          figures out which word is the password from given characters | .passwords [first column of characters]
     Knobs              outputs direction from given 12 bit number | .knobs
     Help               does this```'''
     await bot.initModVar()
@@ -133,6 +133,23 @@ async def initModVar():
                   ['brick','3.575'],['steak','3.582'],['sting','3.592'],['vector','3.595'],['beats','3.600']]
 
     #passwords constants
+    bot.passwords=['right', 'plant', 'spell', 'place', 'point',
+                   'small', 'study', 'other', 'sound', 'still',
+                   'these', 'never', 'their', 'think', 'large',
+                   'there', 'thing', 'three', 'house', 'learn',
+                   'world', 'great', 'where', 'write', 'first',
+                   'water', 'which', 'would', 'every', 'found',
+                   'could', 'below', 'after', 'about', 'again']
+
+    #password variables
+    await bot.PassBuildTree(bot.passwords)
+    bot.passwordsError=False
+    bot.passwordsFirstPass=False
+    bot.passwordCounter=0
+
+################################################################################################################################
+@bot.event
+async def PassBuildTree(aList):
     class passNode:
         def __init__(self,data):
             self.left=None
@@ -154,75 +171,18 @@ async def initModVar():
             else:
                 self.data=data
 
-        def delete(self,target):#all but root
+        def search(self,target,pos):
             if self.data:
-                if self.data<target:
-                    if self.right:
-                        if self.right.data==target:
-                            self.right=self.right.deleteType()
-                            return True
-                        else:
-                            return self.right.delete(target)
-                elif self.data>target:
+                if self.data[pos]==target:
+                    return self.data
+                elif self.data[pos]>target:
                     if self.left:
-                        if self.left.data==target:
-                            self.left=self.left.deleteType()
-                            return True
-                        else:
-                            return self.left.delete(target)
-                elif self.data==target:#is root?
-                    self.data=self.deleteType()
-                    return (self.left,self.data,self.right)
-            return False
-
-
-        def deleteType(self):
-            if self.left==None and self.right==None:#mark None
-                print('leaf')
-                return None
-            elif self.left and self.right:#replace content
-                print('two children')
-                traversing=True
-                lParent=rParent=None
-                tempLeft=self.left
-                tempRight=self.right
-                while traversing:
-                    if tempLeft.right:
-                        lParent=tempLeft
-                        tempLeft=tempLeft.right
-                    if tempRight.left:
-                        rParent=tempRight
-                        tempRight=tempRight.left
-                    if not (tempLeft.right or tempRight.left):
-                        traversing=False
-                if tempLeft.data<tempRight.data:
-                    if lParent:
-                        lParent.right=None
-                    return tempLeft.data
-                else:
-                    if rParent:
-                        rParent.left=None
-                    return tempRight.data
-            elif self.left:#replace node
-                print('left child')
-                return self.left
-            else:#replace node
-                print('right child')
-                return self.right
-
-        def searchTree(self,target):
-            print('traversed to',self.data)
-            if self.data:
-                if self.data==target:
-                    return 'Found'
-                elif self.data>target:
-                    if self.left:
-                        if self.left.searchTree:
-                            return self.left.searchTree(target)
+                        if self.left.search:
+                            return self.left.search(target,pos)
                 else:
                     if self.right:
-                        if self.right.searchTree:
-                            return self.right.searchTree(target)
+                        if self.right.search:
+                            return self.right.search(target,pos)
             return None
 
         def outputTree(self):
@@ -232,39 +192,29 @@ async def initModVar():
             if self.right:
                 self.right.outputTree()
 
-    #password variables
-    bot.passwords=['right', 'plant', 'spell', 'place', 'point',
-                   'small', 'study', 'other', 'sound', 'still',
-                   'these', 'never', 'their', 'think', 'large',
-                   'there', 'thing', 'three', 'house', 'learn',
-                   'world', 'great', 'where', 'write', 'first',
-                   'water', 'which', 'would', 'every', 'found',
-                   'could', 'below', 'after', 'about', 'again']
-    bot.passRoot=passNode(bot.passwords[0])
-    for password in bot.passwords:
-        bot.passRoot.insert(password)
-    while True:
-        if bot.passRoot.searchTree(input('search for item: ').lower())=='Found':
-            print('Found')
-        else:
-            print('Not found')
-        temp=bot.passRoot.delete(input('input item you want removed: ').lower())
-        if temp==True:
-            print('Deleted')
-        elif type(temp) is bool:
-            print('Not deleted')
-        else:
-            bot.passRoot.left,bot.passRoot.data,bot.passRoot.right=temp
-            print('Root deleted')
+        def preorderWhitelist(self,refList,aList):
+            if list(self.data)[bot.passwordCounter] in refList:
+                aList.append(self.data)
+            if self.left:
+                aList=self.left.preorderWhitelist(refList,aList)
+            if self.right:
+                aList=self.right.preorderWhitelist(refList,aList)
+            return aList
+    try:
+        bot.passRoot=passNode(aList[0])
+        for password in range(1,len(aList)):
+            bot.passRoot.insert(aList[password])
+    except IndexError:
+        bot.passwordsError=True
+    except:
+        bot.passwordsError=True
+        print('Error on 203')
 
-
-
-
-################################################################################################################################
 @bot.event
 async def Help(ctx):
     await ctx.channel.send(bot.helpContent)
     await bot.clearCurrentUser(ctx)
+
 @bot.event
 async def Wires(ctx,noWires):
     'Wires'
@@ -669,6 +619,40 @@ def WireSequences():
 @bot.event
 async def Passwords(ctx):
     'Passwords'
+    ##JOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJO
+    if bot.passwordsFirstPass==False:
+        bot.passwordsFirstPass=True
+        try:
+            ctx.content=ctx.content.split('.passwords ')[1]
+        except IndexError:
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+        except:
+            print('Error on 625')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+    #bot.passRoot.outputTree()
+    tempRef=list(ctx.content)
+    passWhitelist=bot.passRoot.preorderWhitelist(tempRef,[])
+    await bot.PassBuildTree(passWhitelist)
+    if bot.passwordsError==True:
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    outputString=passWhitelist[0]+'\n'
+    for password in passWhitelist:
+        outputString=outputString+password+'\n'
+    await ctx.channel.send(('```{output}```').format(output=outputString))
+    bot.passwordCounter=bot.passwordCounter+1
+    #print(bot.passwordCounter)
+    if len(passWhitelist)>1 and bot.passwordCounter<6:
+        await ctx.channel.send('Send the characters in slot: '+str(bot.passwordCounter+1))##'len(whitelist)'
+        await bot.saveCurrentUser(ctx,[bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError])
+    else:
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
 
 
 @bot.event
@@ -799,6 +783,7 @@ async def on_message(message):
                 comm[1]=True
                 for eachUser in range(0,len(bot.currentModules)):
                     if bot.currentModules[eachUser][1]==bot.currentModule:
+                        print(bot.currentModule)
                         if bot.currentModule=='.button':
                             bot.haltButton,bot.holdButton,bot.qIndex=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.wires':
@@ -813,9 +798,7 @@ async def on_message(message):
                         elif bot.currentModule=='.morse':
                             bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.passwords':
-                            bot.passwordsFirstPass,bot.passwordsRowIndex,bot.passContent=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
-                            bot.passwords,bot.passwordsRowInput,bot.passwordTraversing=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
-                            bot.passwordRootIndex,bot.passwordIndex,bot.passwordTempBranch=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
+                            bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
                 await bot.runModules(message)
             else:
                 comm[1]=False
