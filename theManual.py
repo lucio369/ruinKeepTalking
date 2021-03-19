@@ -619,7 +619,6 @@ def WireSequences():
 @bot.event
 async def Passwords(ctx):
     'Passwords'
-    ##JOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJOJO
     if bot.passwordsFirstPass==False:
         bot.passwordsFirstPass=True
         try:
@@ -633,7 +632,6 @@ async def Passwords(ctx):
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
             return
-    #bot.passRoot.outputTree()
     tempRef=list(ctx.content)
     passWhitelist=bot.passRoot.preorderWhitelist(tempRef,[])
     await bot.PassBuildTree(passWhitelist)
@@ -641,12 +639,11 @@ async def Passwords(ctx):
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
-    outputString=passWhitelist[0]+'\n'
+    outputString=''
     for password in passWhitelist:
         outputString=outputString+password+'\n'
-    await ctx.channel.send(('```{output}```').format(output=outputString))
+    await ctx.channel.send(('```\n{output}```').format(output=outputString))
     bot.passwordCounter=bot.passwordCounter+1
-    #print(bot.passwordCounter)
     if len(passWhitelist)>1 and bot.passwordCounter<6:
         await ctx.channel.send('Send the characters in slot: '+str(bot.passwordCounter+1))##'len(whitelist)'
         await bot.saveCurrentUser(ctx,[bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError])
