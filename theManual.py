@@ -1,4 +1,4 @@
-import discord, os, random
+import discord, os, random, traceback
 from discord.ext import commands
 TOKEN=str(open("tokenFile.txt", "r").read())
 bot=commands.Bot(command_prefix='.')
@@ -206,7 +206,14 @@ async def initModVar():
     bot.wOFCounter=0
     bot.wOFFirstPass=False
 
-################################################################################################################################
+    #wire sequences constants
+    bot.wSeqOccurrences=[['C','B','A','A or C','B','A or C','Cut wire','A or B','B'],
+                 ['B','A or C','B','A','B','B or C','C','A or C','A'],
+                 ['Cut wire','A or C','B','A or C','B','B or C','A or B','C','C']]
+
+    #wire sequences variables
+    bot.wSeqRed=bot.wSeqBlue=bot.wSeqBlack=0
+    bot.wSeqFirstPass=False
 @bot.event
 async def PassBuildTree(aList):
     class passNode:
@@ -268,12 +275,10 @@ async def PassBuildTree(aList):
     except:
         bot.passwordsError=True
         print('Error on 203')
-
 @bot.event
 async def Help(ctx):
     await ctx.channel.send(bot.helpContent)
     await bot.clearCurrentUser(ctx)
-
 @bot.event
 async def Wires(ctx,noWires):
     'Wires'
@@ -309,7 +314,6 @@ async def Wires(ctx,noWires):
             await ctx.channel.send(bot.wiresQuestions[index][bot.wiresCounter][0])
             bot.wiresQAsked=True
     await bot.saveCurrentUser(ctx,[bot.wiresCounter,bot.wiresQAsked])
-
 @bot.event
 async def Button(ctx,colour,word):
     'Button'
@@ -370,7 +374,6 @@ None:    release when 1 in any position```''')
         return
     await bot.saveCurrentUser(ctx,[bot.haltButton,bot.holdButton,bot.qIndex])
     return
-
 @bot.event
 async def WhosOnFirst(ctx):
     'Whos on First'
@@ -414,7 +417,6 @@ async def WhosOnFirst(ctx):
             return
     bot.wOFCounter=bot.wOFCounter+1
     await bot.saveCurrentUser(ctx,[bot.wOFCounter,bot.wOFFirstPass])
-
 @bot.event
 async def Memory(ctx):
     if ctx.content=='exit':
@@ -501,7 +503,6 @@ What is it's position?'''.format(Output=memoryOutput))
         return
     await bot.saveCurrentUser(ctx,[bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest,bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase,bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue,bot.memoryArray])
     return
-
 @bot.event
 async def MorseCode(ctx):
     'Morse Code'
@@ -543,7 +544,6 @@ More needed: ```'''.format(data=temp))
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
-
 @bot.event
 async def ComplicatedWires(ctx):
     if ctx.content=='exit':
@@ -580,36 +580,40 @@ async def ComplicatedWires(ctx):
                 return
     await bot.saveCurrentUser(ctx,[bot.situation,bot.cWIndex,bot.cWQAsked])
     return
-
-def WireSequences():
+@bot.event
+async def WireSequences(ctx):
     'Wire Sequences'
-    Occurrences=[['C','B','A','AC','B','AC','ABC','AB','B'],
-                 ['B','AC','B','A','B','BC','C','AC','A'],
-                 ['ABC','AC','B','AC','B','BC','AB','C','C']]
-    red=blue=black=0
-    leave=False
-    while leave==False:
-        inputAnswer=False
-        if red>len(Occurrences[0])-1 or blue>len(Occurrences[1])-1 or black>len(Occurrences[2])-1:
-            leave=True
-        elif input('red: ')=='y':
-            Occurrence=Occurrences[0][red]
-            red=red+1
-            inputAnswer=True
-        elif input('blue: ')=='y':
-            Occurrence=Occurrences[1][blue]
-            blue=blue+1
-            inputAnswer=True
-        elif input('black')=='y':
-            Occurrence=Occurrences[2][black]
-            black=black+1
-            inputAnswer=True
-        if inputAnswer==True:
-            print('Cut if connected to: ',Occurrence)
-        if leave==False:
-            if input('leave? ')=='y':
-                leave=True
-
+    if bot.wSeqFirstPass==False:
+        bot.wSeqFirstPass=True
+        await ctx.channel.send('```What colour is the first wire```')
+        await bot.saveCurrentUser(ctx,[bot.wSeqRed,bot.wSeqBlue,bot.wSeqBlack,bot.wSeqFirstPass])
+        return
+    try:
+        if ctx.content=='red':
+            output=bot.wSeqOccurrences[0][bot.wSeqRed]
+            bot.wSeqRed=bot.wSeqRed+1
+        elif ctx.content=='blue':
+            output=bot.wSeqOccurrences[1][bot.wSeqBlue]
+            bot.wSeqBlue=bot.wSeqBlue+1
+        elif ctx.content=='black':
+            output=bot.wSeqOccurrences[2][bot.wSeqBlack]
+            bot.wSeqBlack=bot.wSeqBlack+1
+        else:
+            if ctx.content=='exit':
+                await ctx.channel.send('```Exiting module```')
+            else:
+                await ctx.channel.send('```You have input erroneous data. Exiting module```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+    except IndexError:
+        await ctx.channel.send('```Impossible. Exiting Module```')
+    if output=='Cut wire':
+        await ctx.channel.send('```Cut wire```')
+    else:
+        await ctx.channel.send(('```Cut the wire if connected to: {out}```'.format(out=output)))
+    await ctx.channel.send('What colour is the next wire?')
+    await bot.saveCurrentUser(ctx,[bot.wSeqRed,bot.wSeqBlue,bot.wSeqBlack,bot.wSeqFirstPass])
 @bot.event
 async def Passwords(ctx):
     'Passwords'
@@ -644,8 +648,6 @@ async def Passwords(ctx):
     else:
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
-
-
 @bot.event
 async def Knobs(ctx):
     if ctx.content=='exit':
@@ -672,7 +674,6 @@ async def Knobs(ctx):
             return
     await bot.saveCurrentUser(ctx,[bot.knobBool])
     return
-
 @bot.event
 async def SimonSays(ctx):
     if bot.simonFirstPass==False:
@@ -724,7 +725,6 @@ async def SimonSays(ctx):
     await ctx.channel.send('send the next colour or "exit"')
     await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
     return
-
 @bot.event
 async def clearCurrentUser(ctx):
     bot.ytzCommands=[['.button',False],
@@ -742,7 +742,6 @@ async def clearCurrentUser(ctx):
         if ctx.author.id==bot.currentModules[user][0]:
             bot.currentModules.pop(user)
     await bot.initModVar()
-
 @bot.event
 async def saveCurrentUser(ctx,parametersToSave):
     for user in range(0,len(bot.currentModules)):
@@ -751,13 +750,11 @@ async def saveCurrentUser(ctx,parametersToSave):
             for param in parametersToSave:
                 bot.currentModules[user].append(param)
     await bot.initModVar()
-
 @bot.event
 async def on_ready():
     await bot.init()
     print("Ready to go")
     await bot.change_presence(activity=discord.Activity(name='and waiting', type=3))
-
 @bot.event
 async def runModules(ctx):
     bot.busy=True
@@ -784,92 +781,93 @@ async def runModules(ctx):
             if comm[0]=='.wires':
                 await bot.Wires(ctx,int(bot.params[0]))
             if comm[0]=='.wireseq':
-                await ctx.channel.send('Module status: In development')
+                await bot.WireSequences(ctx)
 @bot.event
 async def on_message(message):
-    message.content=message.content.lower()
-    if message.channel!=bot.currentChannel:
-        bot.currentChannel=message.channel
-        print(bot.switchChannelOutput.format(channelName=str(bot.currentChannel).upper()))
-    attachURLS=' ~ '
-    for item in message.attachments:
-        attachURLS=attachURLS+item.url+' '
-    if attachURLS!=' ~ ':
-        pass
-        print(message.author.name+': '+message.content+attachURLS)
-    else:
-        pass
-        print(message.author.name+': '+message.content)
-    if message.author==bot.user:
-        return
-##The above is for the shell: outputting the message content (essentially sniffing the server tbh)
-    bot.freshUser=True
-    for user in bot.currentModules:
-        if user[0]==message.author.id:
-            bot.freshUser=False
-            bot.currentModule=user[1]
-    splitMessage=message.content.split(' ')
-    if bot.freshUser==True:
-        bot.command=splitMessage[0]
-        for comm in bot.ytzCommands:
-            if comm[0]==bot.command:
-                comm[1]=True
-                bot.params=splitMessage
-                bot.params.pop(0)
-                bot.currentModules.append([message.author.id,bot.command])
-                await bot.runModules(message)
-            else:
-                comm[1]=False
-    else:
-        for comm in bot.ytzCommands:
-            if comm[0]==bot.currentModule:
-                comm[1]=True
-                for eachUser in range(0,len(bot.currentModules)):
-                    if bot.currentModules[eachUser][1]==bot.currentModule:
-                        print(bot.currentModule)
-                        if bot.currentModule=='.button':
-                            bot.haltButton,bot.holdButton,bot.qIndex=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
-                        elif bot.currentModule=='.wires':
-                            bot.wiresCounter,bot.wiresQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
-                        elif bot.currentModule=='.compwires':
-                            bot.situation,bot.cWIndex,bot.cWQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
-                        elif bot.currentModule=='.memory':
-                            bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
-                            bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
-                            bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
-                            bot.memoryArray=bot.currentModules[eachUser][11]
-                        elif bot.currentModule=='.morse':
-                            bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
-                        elif bot.currentModule=='.passwords':
-                            bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
-                        elif bot.currentModule=='.simonsays':
-                            bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
-                        elif bot.currentModule=='.whosonfirst':
-                            bot.wOFCounter,bot.wOFFirstPass=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
-                await bot.runModules(message)
-            else:
-                comm[1]=False
-    if bot.busy==True:
-        bot.busy=False
-    else:
-        if bot.personalFile==True:
-            if message.content.startswith(bot.conditionCheck[0][0]):
-                await message.channel.send(bot.conditionCheck[0][1])
-            elif message.content.startswith(bot.conditionCheck[1][0]) or message.content.startswith(bot.conditionCheck[2][0]):
-                await message.channel.send(bot.conditionCheck[1][1])
-            elif message.content==bot.conditionCheck[3][0]:
-                await message.channel.send(bot.conditionCheck[3][1])
-            elif str(bot.user.id) in message.content:
-                await message.channel.send(bot.conditionCheck[4])
-            elif bot.conditionCheck[5] in message.content:
-                randomMess=random.randint(0,len(bot.bigtquotetuple)-1)
-                await message.channel.send(bot.bigtquotetuple[randomMess])
-            else:
-                if random.randint(0,40)==1:
-                    if message.author.id not in bot.bullying:
-                        randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
-                    else:
-                        randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
-                    await message.channel.send(randMessage)
-
+    try:
+        message.content=message.content.lower()
+        if message.channel!=bot.currentChannel:
+            bot.currentChannel=message.channel
+            print(bot.switchChannelOutput.format(channelName=str(bot.currentChannel).upper()))
+        attachURLS=' ~ '
+        for item in message.attachments:
+            attachURLS=attachURLS+item.url+' '
+        if attachURLS!=' ~ ':
+            pass
+            print(message.author.name+': '+message.content+attachURLS)
+        else:
+            print(message.author.name+': '+message.content)
+        if message.author==bot.user:
+            return
+        bot.freshUser=True
+        for user in bot.currentModules:
+            if user[0]==message.author.id:
+                bot.freshUser=False
+                bot.currentModule=user[1]
+        splitMessage=message.content.split(' ')
+        if bot.freshUser==True:
+            bot.command=splitMessage[0]
+            for comm in bot.ytzCommands:
+                if comm[0]==bot.command:
+                    comm[1]=True
+                    bot.params=splitMessage
+                    bot.params.pop(0)
+                    bot.currentModules.append([message.author.id,bot.command])
+                    await bot.runModules(message)
+                else:
+                    comm[1]=False
+        else:
+            for comm in bot.ytzCommands:
+                if comm[0]==bot.currentModule:
+                    comm[1]=True
+                    for eachUser in range(0,len(bot.currentModules)):
+                        if bot.currentModules[eachUser][1]==bot.currentModule:
+                            if bot.currentModule=='.button':
+                                bot.haltButton,bot.holdButton,bot.qIndex=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                            elif bot.currentModule=='.wires':
+                                bot.wiresCounter,bot.wiresQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
+                            elif bot.currentModule=='.compwires':
+                                bot.situation,bot.cWIndex,bot.cWQAsked=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                            elif bot.currentModule=='.memory':
+                                bot.memoryStage,bot.memoryCurrentCommand,bot.memoryRequest=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                                bot.memoryCurrentCommand,bot.memoryRequestValue,bot.memoryPhrase=bot.currentModules[eachUser][5],bot.currentModules[eachUser][6],bot.currentModules[eachUser][7]
+                                bot.memoryReqData,bot.memoryPushPosVal,bot.memoryPosValue=bot.currentModules[eachUser][8],bot.currentModules[eachUser][9],bot.currentModules[eachUser][10]
+                                bot.memoryArray=bot.currentModules[eachUser][11]
+                            elif bot.currentModule=='.morse':
+                                bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
+                            elif bot.currentModule=='.passwords':
+                                bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
+                            elif bot.currentModule=='.simonsays':
+                                bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
+                            elif bot.currentModule=='.whosonfirst':
+                                bot.wOFCounter,bot.wOFFirstPass=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
+                            elif bot.currentModule=='.wireseq':
+                                bot.wSeqRed,bot.wSeqBlue,bot.wSeqBlack,bot.wSeqFirstPass=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
+                    await bot.runModules(message)
+                else:
+                    comm[1]=False
+        if bot.busy==True:
+            bot.busy=False
+        else:
+            if bot.personalFile==True:
+                if message.content.startswith(bot.conditionCheck[0][0]):
+                    await message.channel.send(bot.conditionCheck[0][1])
+                elif message.content.startswith(bot.conditionCheck[1][0]) or message.content.startswith(bot.conditionCheck[2][0]):
+                    await message.channel.send(bot.conditionCheck[1][1])
+                elif message.content==bot.conditionCheck[3][0]:
+                    await message.channel.send(bot.conditionCheck[3][1])
+                elif str(bot.user.id) in message.content:
+                    await message.channel.send(bot.conditionCheck[4])
+                elif bot.conditionCheck[5] in message.content:
+                    randomMess=random.randint(0,len(bot.bigtquotetuple)-1)
+                    await message.channel.send(bot.bigtquotetuple[randomMess])
+                else:
+                    if random.randint(0,40)==1:
+                        if message.author.id not in bot.bullying:
+                            randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
+                        else:
+                            randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
+                        await message.channel.send(randMessage)
+    except:
+        await message.channel.send(('<@!196348156751904769>```{error}```'.format(error=traceback.format_exc())))
 bot.run(TOKEN)
