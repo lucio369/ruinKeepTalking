@@ -22,16 +22,6 @@ async def init():
     bot.freshUser=True
     bot.currentModule=''
     bot.params=[]
-    try:
-        import hajiBajiPrivate
-        bot.personalFile=True
-        bot.bigtquotetuple=hajiBajiPrivate.bigtquotetuple
-        bot.bullying=hajiBajiPrivate.bullying
-        bot.genMessage=hajiBajiPrivate.genMessage
-        bot.conditionCheck=hajiBajiPrivate.conditionCheck
-
-    except ModuleNotFoundError:
-        bot.personalFile=False
     bot.currentChannel=''
     bot.switchChannelOutput='''
 ===============================================================================
@@ -761,7 +751,11 @@ async def runModules(ctx):
     for comm in bot.ytzCommands:
         if comm[1]==True:
             if comm[0]=='.button':
-                await bot.Button(ctx,bot.params[0],bot.params[1])
+                if len(bot.params)==2:
+                    await bot.Button(ctx,bot.params[0],bot.params[1])
+                else:
+                    await ctx.channel.send('```Input the appropriate parameters```')
+                    await bot.clearCurrentUser(ctx)
             if comm[0]=='.compwires':
                 await bot.ComplicatedWires(ctx)
             if comm[0]=='.help':
@@ -779,7 +773,11 @@ async def runModules(ctx):
             if comm[0]=='.whosonfirst':
                 await bot.WhosOnFirst(ctx)
             if comm[0]=='.wires':
-                await bot.Wires(ctx,int(bot.params[0]))
+                if len(bot.params)==1:
+                    await bot.Wires(ctx,int(bot.params[0]))
+                else:
+                    await ctx.channel.send('```Input the appropriate parameters```')
+                    await bot.clearCurrentUser(ctx)
             if comm[0]=='.wireseq':
                 await bot.WireSequences(ctx)
 @bot.event
@@ -846,28 +844,8 @@ async def on_message(message):
                     await bot.runModules(message)
                 else:
                     comm[1]=False
-        if bot.busy==True:
-            bot.busy=False
-        else:
-            if bot.personalFile==True:
-                if message.content.startswith(bot.conditionCheck[0][0]):
-                    await message.channel.send(bot.conditionCheck[0][1])
-                elif message.content.startswith(bot.conditionCheck[1][0]) or message.content.startswith(bot.conditionCheck[2][0]):
-                    await message.channel.send(bot.conditionCheck[1][1])
-                elif message.content==bot.conditionCheck[3][0]:
-                    await message.channel.send(bot.conditionCheck[3][1])
-                elif str(bot.user.id) in message.content:
-                    await message.channel.send(bot.conditionCheck[4])
-                elif bot.conditionCheck[5] in message.content:
-                    randomMess=random.randint(0,len(bot.bigtquotetuple)-1)
-                    await message.channel.send(bot.bigtquotetuple[randomMess])
-                else:
-                    if random.randint(0,40)==1:
-                        if message.author.id not in bot.bullying:
-                            randMessage=bot.genMessage[random.randint(0,len(bot.genMessage)-1)]
-                        else:
-                            randMessage=bot.bullying[message.author.id][random.randint(0,len(bot.bullying[message.author.id])-1)]
-                        await message.channel.send(randMessage)
     except:
         await message.channel.send(('<@!196348156751904769>```{error}```'.format(error=traceback.format_exc())))
+        await bot.clearCurrentUser(message)
+        await message.channel.send('```Sorry, not your fault. Try again```')
 bot.run(TOKEN)
