@@ -39,9 +39,13 @@ async def init():
     '''
     bot.busy=False
     bot.helpContent='''```
+    Keep Talking and Nobody Explodes Assistant
+
+    Compatible with: Version 1 | Verification Code: 241
+
     Wires              Finds correct wire based off user input | .wires [number of wires]
     Button             Finds correct button based off user input | .button [colour of button] [word on button]
-    Simon Says         Finds correct button based off user input | .simonsays [number of strikes]
+    Simon Says         Finds correct button based off user input | .simonsays [respond with True or False: There is a vowel in the serial number]
     Whos on First      puts to word response from input word | .whosonfirst
     Memory             returns appropriate button to press based off user input | .memory
     Morse Code         works out valid word and frequency encoded in morse | .morse
@@ -146,6 +150,20 @@ async def initModVar():
     bot.passwordsError=False
     bot.passwordsFirstPass=False
     bot.passwordCounter=0
+
+    #simon says constants
+    bot.simonSequence=[[['blue','red','yellow','green'],
+    ['yellow','green','blue','red'],
+    ['green','red','yellow','blue']],
+    [['blue','yellow','green','red'],
+    ['red','blue','yellow','green'],
+    ['yellow','green','blue','red']]]
+
+    #simon says variables
+    bot.simonOut=[]
+    bot.simonStrikes=0
+    bot.simonFirstPass=False
+    bot.simonVowel=0
 
 ################################################################################################################################
 @bot.event
@@ -680,6 +698,58 @@ async def Knobs(ctx):
     return
 
 @bot.event
+async def SimonSays(ctx):
+    if bot.simonFirstPass==False:
+        bot.simonFirstPass=True
+        if ctx.content.split('.simonsays ')[1]=='true':
+            bot.simonVowel=0
+        elif ctx.content.split('.simonsays ')[1]=='false':
+            bot.simonVowel=1
+        else:
+            await ctx.channel.send('```Bad input. Confirm if there is a vowel in the serial number with True or False```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+        await ctx.channel.send('```Now what did simon say?```')
+        await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
+        return
+    elif bot.simonStrikes>2:
+        await ctx.channel.send('```Uh too many strikes```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    elif 'strike' in ctx.content:
+        bot.simonStrikes=bot.simonStrikes+1
+        await ctx.channel.send('```That was dumb- Next colour please.```')
+        await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
+        return
+    elif ctx.content=='exit':
+        await ctx.channel.send('```See ya```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    elif ctx.content=='red':
+        bot.simonOut.append(0)
+    elif ctx.content=='blue':
+        bot.simonOut.append(1)
+    elif ctx.content=='green':
+        bot.simonOut.append(2)
+    elif ctx.content=='yellow':
+        bot.simonOut.append(3)
+    else:
+        await ctx.channel.send('```Bad input. Enter a colour next time```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+    temp=''
+    for item in bot.simonOut:
+        temp=temp+'\n'+bot.simonSequence[bot.simonVowel][bot.simonStrikes][item]
+    await ctx.channel.send(('```{output}```').format(output=temp))
+    await ctx.channel.send('send the next colour or "exit"')
+    await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
+    return
+
+@bot.event
 async def clearCurrentUser(ctx):
     bot.ytzCommands=[['.button',False],
                  ['.compwires',False],
@@ -732,13 +802,13 @@ async def runModules(ctx):
             if comm[0]=='.passwords':
                 await bot.Passwords(ctx)
             if comm[0]=='.simonsays':
-                await ctx.channel.send('In development')
+                await bot.SimonSays(ctx)
             if comm[0]=='.whosonfirst':
-                await ctx.channel.send('In development')
+                await ctx.channel.send('Module status: In development')
             if comm[0]=='.wires':
                 await bot.Wires(ctx,int(bot.params[0]))
             if comm[0]=='.wireseq':
-                await ctx.channel.send('In development')
+                await ctx.channel.send('Module status: In development')
 @bot.event
 async def on_message(message):
     message.content=message.content.lower()
@@ -796,6 +866,8 @@ async def on_message(message):
                             bot.letterList,bot.returnPass,bot.fail=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4]
                         elif bot.currentModule=='.passwords':
                             bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
+                        elif bot.currentModule=='.simonsays':
+                            bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
                 await bot.runModules(message)
             else:
                 comm[1]=False
