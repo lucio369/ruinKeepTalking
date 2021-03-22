@@ -10,13 +10,6 @@ Instead I programmed the bot to essentially bully any one of us at random for fu
 
 You could remove these modules in the code or fill them to suit your own server.
 
-## These are the missing files and how they are structured:
+## What's missing:
 
 *tokenFile.txt* - ***discordAPIToken***
-
-*bullyingFile.txt* - {***discordID***:***message1***,***message2***...,***discordID***:***message1***,***message2***...etc}
-
-*sala.txt* - ***discordID*** //discord ID of the friend you particularly want to tease
-
-
-Have fun (or don't)
