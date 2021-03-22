@@ -1,6 +1,4 @@
 tokenFile.txt
-bullyingFile.txt
-sala.txt
 theManual.exe
 botPFP.ico
 /prevVersions
@@ -9,4 +7,3 @@ botPFP.ico
 /dist
 manualToEXE.py
 theManual.spec
-hajiBajiPrivate.py
