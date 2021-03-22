@@ -45,7 +45,7 @@ async def init():
 
     Wires              Finds correct wire based off user input | .wires [number of wires]
     Button             Finds correct button based off user input | .button [colour of button] [word on button]
-    Simon Says         Finds correct button based off user input | .simonsays [respond with True or False: There is a vowel in the serial number]
+    Simon Says         Finds correct button based off user input | .simonsays [True/False: Vowel in serial num]
     Whos on First      puts to word response from input word | .whosonfirst
     Memory             returns appropriate button to press based off user input | .memory
     Morse Code         works out valid word and frequency encoded in morse | .morse
@@ -164,6 +164,47 @@ async def initModVar():
     bot.simonStrikes=0
     bot.simonFirstPass=False
     bot.simonVowel=0
+
+    #whos on first constants
+    bot.wOFDisplayList=[['yes','left middle'],['first','top right'],['display','bottom right'],['okay','top right'],
+                 ['says','bottom right'],['nothing','middle left'],['','bottom left'],['blank','middle right'],['no','bottom right'],
+                 ['led','middle left'],['lead','bottom right'],['read','middle right'],['red','middle right'],['reed','bottom left'],
+                 ['leed','bottom left'],['hold on','bottom right'],['you','middle right'],['you are','bottom right'],
+                 ['your','middle right'],["you're",'middle right'],["youre",'middle right'],['ur','top left'],['there','bottom right'],
+                 ["they're",'bottom left'],["theyre",'bottom left'],['their','middle right'],['they are','middle left'],
+                 ['see','bottom right'],['c','top right'],['cee','bottom right']]
+    bot.wOFPotencialList=[['READY','YES', 'OKAY', 'WHAT', 'MIDDLE', 'LEFT', 'PRESS', 'RIGHT', 'BLANK', 'READY', 'NO', 'FIRST', 'UHHH', 'NOTHING', 'WAIT'],
+     ['FIRST','LEFT', 'OKAY', 'YES', 'MIDDLE', 'NO', 'RIGHT', 'NOTHING', 'UHHH', 'WAIT', 'READY', 'BLANK', 'WHAT', 'PRESS', 'FIRST'],
+     ['NO','BLANK', 'UHHH', 'WAIT', 'FIRST', 'WHAT', 'READY', 'RIGHT', 'YES', 'NOTHING', 'LEFT', 'PRESS', 'OKAY', 'NO', 'MIDDLE'],
+     ['BLANK','WAIT', 'RIGHT', 'OKAY', 'MIDDLE', 'BLANK', 'PRESS', 'READY', 'NOTHING', 'NO', 'WHAT', 'LEFT', 'UHHH', 'YES', 'FIRST'],
+     ['NOTHING','UHHH', 'RIGHT', 'OKAY', 'MIDDLE', 'YES', 'BLANK', 'NO', 'PRESS', 'LEFT', 'WHAT', 'WAIT', 'FIRST', 'NOTHING', 'READY'],
+     ['YES','OKAY', 'RIGHT', 'UHHH', 'MIDDLE', 'FIRST', 'WHAT', 'PRESS', 'READY', 'NOTHING', 'YES', 'LEFT', 'BLANK', 'NO', 'WAIT'],
+     ['WHAT','UHHH', 'WHAT', 'LEFT', 'NOTHING', 'READY', 'BLANK', 'MIDDLE', 'NO', 'OKAY', 'FIRST', 'WAIT', 'YES', 'PRESS', 'RIGHT'],
+     ['UHHH','READY', 'NOTHING', 'LEFT', 'WHAT', 'OKAY', 'YES', 'RIGHT', 'NO', 'PRESS', 'BLANK', 'UHHH', 'MIDDLE', 'WAIT', 'FIRST'],
+     ['LEFT','RIGHT', 'LEFT', 'FIRST', 'NO', 'MIDDLE', 'YES', 'BLANK', 'WHAT', 'UHHH', 'WAIT', 'PRESS', 'READY', 'OKAY', 'NOTHING'],
+     ['RIGHT','YES', 'NOTHING', 'READY', 'PRESS', 'NO', 'WAIT', 'WHAT', 'RIGHT', 'MIDDLE', 'LEFT', 'UHHH', 'BLANK', 'OKAY', 'FIRST'],
+     ['MIDDLE','BLANK', 'READY', 'OKAY', 'WHAT', 'NOTHING', 'PRESS', 'NO', 'WAIT', 'LEFT', 'MIDDLE', 'RIGHT', 'FIRST', 'UHHH', 'YES'],
+     ['OKAY','MIDDLE', 'NO', 'FIRST', 'YES', 'UHHH', 'NOTHING', 'WAIT', 'OKAY', 'LEFT', 'READY', 'BLANK', 'PRESS', 'WHAT', 'RIGHT'],
+     ['WAIT','UHHH', 'NO', 'BLANK', 'OKAY', 'YES', 'LEFT', 'FIRST', 'PRESS', 'WHAT', 'WAIT', 'NOTHING', 'READY', 'RIGHT', 'MIDDLE'],
+     ['PRESS','RIGHT', 'MIDDLE', 'YES', 'READY', 'PRESS', 'OKAY', 'NOTHING', 'UHHH', 'BLANK', 'LEFT', 'FIRST', 'WHAT', 'NO', 'WAIT'],
+     ['YOU','SURE', 'YOUARE', 'YOUR', 'YOURE', 'NEXT', 'UHHUH', 'UR', 'HOLD', 'WHAT?', 'YOU', 'UHUH', 'LIKE', 'DONE', 'U'],
+     ['YOU ARE','YOUR', 'NEXT', 'LIKE', 'UHHUH', 'WHAT?', 'DONE', 'UHUH', 'HOLD', 'YOU', 'U', 'YOURE', 'SURE', 'UR', 'YOUARE'],
+     ['YOUR','UHUH', 'YOUARE', 'UHHUH', 'YOUR', 'NEXT', 'UR', 'SURE', 'U', 'YOURE', 'YOU', 'WHAT?', 'HOLD', 'LIKE', 'DONE'],
+     ["YOU'RE",'YOU', 'YOURE', 'UR', 'NEXT', 'UHUH', 'YOUARE', 'U', 'YOUR', 'WHAT?', 'UHHUH', 'SURE', 'DONE', 'LIKE', 'HOLD'],
+     ['UR','DONE', 'U', 'UR', 'UHHUH', 'WHAT?', 'SURE', 'YOUR', 'HOLD', 'YOURE', 'LIKE', 'NEXT', 'UHUH', 'YOUARE', 'YOU'],
+     ['U','UHHUH', 'SURE', 'NEXT', 'WHAT?', 'YOURE', 'UR', 'UHUH', 'DONE', 'U', 'YOU', 'LIKE', 'HOLD', 'YOUARE', 'YOUR'],
+     ['UH HUH','UHHUH', 'YOUR', 'YOUARE', 'YOU', 'DONE', 'HOLD', 'UHUH', 'NEXT', 'SURE', 'LIKE', 'YOURE', 'UR', 'U', 'WHAT?'],
+     ['UH UH','UR', 'U', 'YOUARE', 'YOURE', 'NEXT', 'UHUH', 'DONE', 'YOU', 'UHHUH', 'LIKE', 'YOUR', 'SURE', 'HOLD', 'WHAT?'],
+     ['WHAT?','YOU', 'HOLD', 'YOURE', 'YOUR', 'U', 'DONE', 'UHUH', 'LIKE', 'YOUARE', 'UHHUH', 'UR', 'NEXT', 'WHAT?', 'SURE'],
+     ['DONE','SURE', 'UHHUH', 'NEXT', 'WHAT?', 'YOUR', 'UR', 'YOURE', 'HOLD', 'LIKE', 'YOU', 'U', 'YOUARE', 'UHUH', 'DONE'],
+     ['NEXT','WHAT?', 'UHHUH', 'UHUH', 'YOUR', 'HOLD', 'SURE', 'NEXT', 'LIKE', 'DONE', 'YOUARE', 'UR', 'YOURE', 'U', 'YOU'],
+     ['HOLD','YOUARE', 'U', 'DONE', 'UHUH', 'YOU', 'UR', 'SURE', 'WHAT?', 'YOURE', 'NEXT', 'HOLD', 'UHHUH', 'YOUR', 'LIKE'],
+     ['SURE','YOUARE', 'DONE', 'LIKE', 'YOURE', 'YOU', 'HOLD', 'UHHUH', 'UR', 'SURE', 'U', 'WHAT?', 'NEXT', 'YOUR', 'UHUH'],
+     ['LIKE','YOURE', 'NEXT', 'U', 'UR', 'HOLD', 'DONE', 'UHUH', 'WHAT?', 'UHHUH', 'YOU', 'LIKE', 'SURE', 'YOUARE', 'YOUR']]
+
+    #whos on first variables
+    bot.wOFCounter=0
+    bot.wOFFirstPass=False
 
 ################################################################################################################################
 @bot.event
@@ -330,115 +371,50 @@ None:    release when 1 in any position```''')
     await bot.saveCurrentUser(ctx,[bot.haltButton,bot.holdButton,bot.qIndex])
     return
 
-def WhosOnFirst():
+@bot.event
+async def WhosOnFirst(ctx):
     'Whos on First'
-    displayList=[['yes','left middle'],['first','top right'],['display','bottom right'],['okay','top right'],
-                 ['says','bottom right'],['nothing','middle left'],['','bottom left'],['blank','middle right'],['no','bottom right'],
-                 ['led','middle left'],['lead','bottom right'],['read','middle right'],['red','middle right'],['reed','bottom left'],
-                 ['leed','bottom left'],['hold on','bottom right'],['you','middle right'],['you are','bottom right'],
-                 ['your','middle right'],['youre','middle right'],['ur','top left'],['there','bottom right'],
-                 ['theyre','bottom left'],['their','middle right'],['they are','middle left'],
-                 ['see','bottom right'],['c','top right'],['cee','bottom right']]
-    potencialList=[['YES', 'OKAY', 'WHAT', 'MIDDLE', 'LEFT', 'PRESS', 'RIGHT', 'BLANK', 'READY', 'NO', 'FIRST', 'UHHH', 'NOTHING', 'WAIT'],
-     ['LEFT', 'OKAY', 'YES', 'MIDDLE', 'NO', 'RIGHT', 'NOTHING', 'UHHH', 'WAIT', 'READY', 'BLANK', 'WHAT', 'PRESS', 'FIRST'],
-     ['BLANK', 'UHHH', 'WAIT', 'FIRST', 'WHAT', 'READY', 'RIGHT', 'YES', 'NOTHING', 'LEFT', 'PRESS', 'OKAY', 'NO', 'MIDDLE'],
-     ['WAIT', 'RIGHT', 'OKAY', 'MIDDLE', 'BLANK', 'PRESS', 'READY', 'NOTHING', 'NO', 'WHAT', 'LEFT', 'UHHH', 'YES', 'FIRST'],
-     ['UHHH', 'RIGHT', 'OKAY', 'MIDDLE', 'YES', 'BLANK', 'NO', 'PRESS', 'LEFT', 'WHAT', 'WAIT', 'FIRST', 'NOTHING', 'READY'],
-     ['OKAY', 'RIGHT', 'UHHH', 'MIDDLE', 'FIRST', 'WHAT', 'PRESS', 'READY', 'NOTHING', 'YES', 'LEFT', 'BLANK', 'NO', 'WAIT'],
-     ['UHHH', 'WHAT', 'LEFT', 'NOTHING', 'READY', 'BLANK', 'MIDDLE', 'NO', 'OKAY', 'FIRST', 'WAIT', 'YES', 'PRESS', 'RIGHT'],
-     ['READY', 'NOTHING', 'LEFT', 'WHAT', 'OKAY', 'YES', 'RIGHT', 'NO', 'PRESS', 'BLANK', 'UHHH', 'MIDDLE', 'WAIT', 'FIRST'],
-     ['RIGHT', 'LEFT', 'FIRST', 'NO', 'MIDDLE', 'YES', 'BLANK', 'WHAT', 'UHHH', 'WAIT', 'PRESS', 'READY', 'OKAY', 'NOTHING'],
-     ['YES', 'NOTHING', 'READY', 'PRESS', 'NO', 'WAIT', 'WHAT', 'RIGHT', 'MIDDLE', 'LEFT', 'UHHH', 'BLANK', 'OKAY', 'FIRST'],
-     ['BLANK', 'READY', 'OKAY', 'WHAT', 'NOTHING', 'PRESS', 'NO', 'WAIT', 'LEFT', 'MIDDLE', 'RIGHT', 'FIRST', 'UHHH', 'YES'],
-     ['MIDDLE', 'NO', 'FIRST', 'YES', 'UHHH', 'NOTHING', 'WAIT', 'OKAY', 'LEFT', 'READY', 'BLANK', 'PRESS', 'WHAT', 'RIGHT'],
-     ['UHHH', 'NO', 'BLANK', 'OKAY', 'YES', 'LEFT', 'FIRST', 'PRESS', 'WHAT', 'WAIT', 'NOTHING', 'READY', 'RIGHT', 'MIDDLE'],
-     ['RIGHT', 'MIDDLE', 'YES', 'READY', 'PRESS', 'OKAY', 'NOTHING', 'UHHH', 'BLANK', 'LEFT', 'FIRST', 'WHAT', 'NO', 'WAIT'],
-     ['SURE', 'YOUARE', 'YOUR', 'YOURE', 'NEXT', 'UHHUH', 'UR', 'HOLD', 'WHAT', 'YOU', 'UHUH', 'LIKE', 'DONE', 'U'],
-     ['YOUR', 'NEXT', 'LIKE', 'UHHUH', 'WHAT', 'DONE', 'UHUH', 'HOLD', 'YOU', 'U', 'YOURE', 'SURE', 'UR', 'YOUARE'],
-     ['UHUH', 'YOUARE', 'UHHUH', 'YOUR', 'NEXT', 'UR', 'SURE', 'U', 'YOURE', 'YOU', 'WHAT', 'HOLD', 'LIKE', 'DONE'],
-     ['YOU', 'YOURE', 'UR', 'NEXT', 'UHUH', 'YOUARE', 'U', 'YOUR', 'WHAT', 'UHHUH', 'SURE', 'DONE', 'LIKE', 'HOLD'],
-     ['DONE', 'U', 'UR', 'UHHUH', 'WHAT', 'SURE', 'YOUR', 'HOLD', 'YOURE', 'LIKE', 'NEXT', 'UHUH', 'YOUARE', 'YOU'],
-     ['UHHUH', 'SURE', 'NEXT', 'WHAT', 'YOURE', 'UR', 'UHUH', 'DONE', 'U', 'YOU', 'LIKE', 'HOLD', 'YOUARE', 'YOUR'],
-     ['UHHUH', 'YOUR', 'YOUARE', 'YOU', 'DONE', 'HOLD', 'UHUH', 'NEXT', 'SURE', 'LIKE', 'YOURE', 'UR', 'U', 'WHAT'],
-     ['UR', 'U', 'YOUARE', 'YOURE', 'NEXT', 'UHUH', 'DONE', 'YOU', 'UHHUH', 'LIKE', 'YOUR', 'SURE', 'HOLD', 'WHAT'],
-     ['YOU', 'HOLD', 'YOURE', 'YOUR', 'U', 'DONE', 'UHUH', 'LIKE', 'YOUARE', 'UHHUH', 'UR', 'NEXT', 'WHAT', 'SURE'],
-     ['SURE', 'UHHUH', 'NEXT', 'WHAT', 'YOUR', 'UR', 'YOURE', 'HOLD', 'LIKE', 'YOU', 'U', 'YOUARE', 'UHUH', 'DONE'],
-     ['WHAT', 'UHHUH', 'UHUH', 'YOUR', 'HOLD', 'SURE', 'NEXT', 'LIKE', 'DONE', 'YOUARE', 'UR', 'YOURE', 'U', 'YOU'],
-     ['YOUARE', 'U', 'DONE', 'UHUH', 'YOU', 'UR', 'SURE', 'WHAT', 'YOURE', 'NEXT', 'HOLD', 'UHHUH', 'YOUR', 'LIKE'],
-     ['YOUARE', 'DONE', 'LIKE', 'YOURE', 'YOU', 'HOLD', 'UHHUH', 'UR', 'SURE', 'U', 'WHAT', 'NEXT', 'YOUR', 'UHUH'],
-     ['YOURE', 'NEXT', 'U', 'UR', 'HOLD', 'DONE', 'UHUH', 'WHAT', 'UHHUH', 'YOU', 'LIKE', 'SURE', 'YOUARE', 'YOUR']]
-    leave=False
-    index=0
-    while leave==False:
-        display=input('what is the word?')
-        for i in range(0,len(displayList)-1):
-            if displayList[i][0]==display:
-                index=i
-        try:
-            whichList=input(displayList[index][1]+': ')
-        except:
-            print('item not in list')
-            leave=True
-            break
-        if whichList=='ready':
-            listNum=0
-        elif whichList=='first':
-            listNum=1
-        elif whichList=='no':
-            listNum=2
-        elif whichList=='blank':
-            listNum=3
-        elif whichList=='nothing':
-            listNum=4
-        elif whichList=='yes':
-            listNum=5
-        elif whichList=='what':
-            listNum=6
-        elif whichList=='uhhh':
-            listNum=7
-        elif whichList=='left':
-            listNum=8
-        elif whichList=='right':
-            listNum=9
-        elif whichList=='middle':
-            listNum=10
-        elif whichList=='okay':
-            listNum=11
-        elif whichList=='wait':
-            listNum=12
-        elif whichList=='press':
-            listNum=13
-        elif whichList=='you':
-            listNum=14
-        elif whichList=='you are':
-            listNum=15
-        elif whichList=='your':
-            listNum=16
-        elif whichList=='youre':
-            listNum=17
-        elif whichList=='ur':
-            listNum=18
-        elif whichList=='u':
-            listNum=19
-        elif whichList=='uh huh':
-            listNum=20
-        elif whichList=='uh uh':
-            listNum=21
-        elif whichList=='what':
-            listNum=22
-        elif whichList=='done':
-            listNum=23
-        elif whichList=='next':
-            listNum=24
-        elif whichList=='hold':
-            listNum=25
-        elif whichList=='sure':
-            listNum=26
-        elif whichList=='like':
-            listNum=27
-        print(potencialList[listNum])
-        if input('done?'=='y'):
-            leave=True
+    if bot.wOFFirstPass==False:
+        bot.wOFFirstPass=True
+        await ctx.channel.send('```What does the display state?```')
+        await bot.saveCurrentUser(ctx,[bot.wOFCounter,bot.wOFFirstPass])
+        return
+    if bot.wOFCounter%2==0:
+        print(ctx.content)
+        temp=False
+        for item in bot.wOFDisplayList:
+            if item[0]==ctx.content:
+                temp=True
+                await ctx.channel.send(('```What does {position} read?```'.format(position=item[1])))
+        if temp==False:
+            if ctx.content=='exit':
+                await ctx.channel.send('```Exiting module```')
+            else:
+                await ctx.channel.send('```You have input erroneous data. Exiting module```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+    else:
+        temp=''
+        for item in bot.wOFPotencialList:
+            if item[0]==ctx.content.upper():
+                print(item)
+                for pot in range(1,len(item)):
+                    temp=temp+'\n'+item[pot]
+        if temp!='':
+            await ctx.channel.send(('```Read the following to the defuser:{output}```'.format(output=temp)))
+            await ctx.channel.send('What does the display state?')
+        else:
+            if ctx.content=='exit':
+                await ctx.channel.send('```Exiting module```')
+            else:
+                await ctx.channel.send('```You have input erroneous data. Exiting module```')
+            await bot.initModVar()
+            await bot.clearCurrentUser(ctx)
+            return
+    bot.wOFCounter=bot.wOFCounter+1
+    await bot.saveCurrentUser(ctx,[bot.wOFCounter,bot.wOFFirstPass])
+
 @bot.event
 async def Memory(ctx):
     if ctx.content=='exit':
@@ -804,7 +780,7 @@ async def runModules(ctx):
             if comm[0]=='.simonsays':
                 await bot.SimonSays(ctx)
             if comm[0]=='.whosonfirst':
-                await ctx.channel.send('Module status: In development')
+                await bot.WhosOnFirst(ctx)
             if comm[0]=='.wires':
                 await bot.Wires(ctx,int(bot.params[0]))
             if comm[0]=='.wireseq':
@@ -868,6 +844,8 @@ async def on_message(message):
                             bot.passRoot,bot.passwordsFirstPass,bot.passwordCounter,bot.passwordsError=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
                         elif bot.currentModule=='.simonsays':
                             bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3],bot.currentModules[eachUser][4],bot.currentModules[eachUser][5]
+                        elif bot.currentModule=='.whosonfirst':
+                            bot.wOFCounter,bot.wOFFirstPass=bot.currentModules[eachUser][2],bot.currentModules[eachUser][3]
                 await bot.runModules(message)
             else:
                 comm[1]=False
