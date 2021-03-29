@@ -2,7 +2,6 @@ import discord, os, random, traceback
 from discord.ext import commands
 TOKEN=str(open("tokenFile.txt", "r").read())
 bot=commands.Bot(command_prefix='.')
-
 @bot.event
 async def init():
     #general
@@ -20,23 +19,37 @@ async def init():
                     '.simonsays',
                     '.whosonfirst',
                     '.wires',
-                    '.wireseq']
+                    '.wireseq',
+                    '.mazes',
+                    '.keypads',
+                    '.vent',
+                    '.capacitor']
     bot.helpContent='''```
     Keep Talking and Nobody Explodes Assistant
 
     Compatible with: Version 1 | Verification Code: 241
 
-    Wires              .wires [number of wires]
-    Button             .button [colour of button] [word on button]
-    Simon Says         .simonsays [True/False: Vowel in serial num]
-    Whos on First      .whosonfirst
-    Memory             .memory
-    Morse Code         .morse
-    Complicated Wires  .compWires
-    Wire Sequences     .wireseq
-    Passwords          .passwords [first column of characters]
-    Knobs              .knobs
-    Help               .help [module]```'''
+    Wires                .wires [number of wires]
+    Button               .button [colour of button] [word on button]
+    Simon Says           .simonsays [True/False: Vowel in serial num]
+    Whos on First        .whosonfirst
+    Memory               .memory
+    Morse Code           .morse
+    Complicated Wires    .compWires
+    Wire Sequences       .wireseq
+    Passwords            .passwords [first column of characters]
+    Knobs                .knobs
+    keypads              .keypads
+    Mazes                .mazes
+    Venting Gas          .vent
+    Capacitor Discharge  .capacitor
+    Help                 .help [module]
+
+    To enquire more on the bombs attributes, query .help {attribute}:
+
+    indicator
+    battery
+    port```'''
     bot.helpContentDict={'button':('.button [colour of button] [word on button]\nLaunches module taking the colour and word shown on the button to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825419896325668884/unknown.png'),
                     'compwires':('.compWires\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420247224942622/unknown.png'),
                     'knobs':('.knobs\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420618756784138/unknown.png'),
@@ -46,7 +59,15 @@ async def init():
                     'simonsays':('simonsays [True/False]\nLaunches module taking a true or false response regarding the fact There is a vowel in the serial num to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420007096713216/unknown.png'),
                     'whosonfirst':('.whosonfirst\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420065822081024/unknown.png'),
                     'wires':('.wires [number of wires]\nLaunches module taking the number of visible wires for the module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825419803807186984/unknown.png'),
-                    'wireseq':('.wireseq\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420295040532540/unknown.png')}
+                    'wireseq':('.wireseq\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/825420295040532540/unknown.png'),
+                    'mazes':('.mazes\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/826024165705383936/unknown.png'),
+                    'vent':('The following is the documentation for this module','https://cdn.discordapp.com/attachments/806548674309128242/826024495025225738/unknown.png'),
+                    'capacitor':('The following is the documentation for this module','https://cdn.discordapp.com/attachments/806548674309128242/826024708704174180/unknown.png'),
+                    'keypads':('.keypads\nLaunches module to assist defusal','https://cdn.discordapp.com/attachments/806548674309128242/826025024557154314/unknown.png'),
+                    'indicator':('The following are the potencial indicators','https://cdn.discordapp.com/attachments/806548674309128242/826037750868344832/unknown.png'),
+                    'battery':('The following are the potencial battery types','https://cdn.discordapp.com/attachments/806548674309128242/826038100907786290/unknown.png'),
+                    'port':('The following are the potencial ports','https://cdn.discordapp.com/attachments/806548674309128242/826038471462223882/unknown.png')
+                    }
     await bot.initModConst()
     await bot.initModVar()
 @bot.event
@@ -82,7 +103,7 @@ async def initModConst():
     #memory constants
     bot.memoryInstructions=[[[2,'p'],[2,'p'],[3,'p'],[4,'p']],
                             [[4,'w'],[0,'s'],[1,'p'],[0,'s']],
-                            [[1,'l'],[1,'l'],[3,'p'],[4,'w']],
+                            [[1,'l'],[0,'l'],[3,'p'],[4,'w']],
                             [[0,'s'],[1,'p'],[1,'s'],[1,'s']],
                             [[0,'l'],[1,'l'],[2,'l'],[3,'l']]]
     #morse constants
@@ -288,7 +309,7 @@ async def Wires(ctx,noWires):
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
         else:
-            await ctx.channel.send('```'+bot.wiresQuestions[index][bot.wiresCounter][0]+'```')
+            await ctx.channel.send(bot.wiresQuestions[index][bot.wiresCounter][0])
             bot.wiresQAsked=True
     await bot.saveCurrentUser(ctx,[bot.wiresCounter,bot.wiresQAsked])
 @bot.event
@@ -339,7 +360,7 @@ None:    release when 1 in any position```''')
             pass1=False
     if pass1==True:
         if bot.questions[bot.qIndex][1]!='':
-            await ctx.channel.send('```'+bot.questions[bot.qIndex][1]+'?'+'```')
+            await ctx.channel.send(bot.questions[bot.qIndex][1]+'?')
             bot.haltButton=True
         else:
             bot.holdButton=bot.questions[bot.qIndex][2]
@@ -356,7 +377,7 @@ async def WhosOnFirst(ctx):
     'Whos on First'
     if bot.wOFFirstPass==False:
         bot.wOFFirstPass=True
-        await ctx.channel.send('```What does the display state?```')
+        await ctx.channel.send('What does the display state?')
         await bot.saveCurrentUser(ctx,[bot.wOFCounter,bot.wOFFirstPass])
         return
     if bot.wOFCounter%2==0:
@@ -364,7 +385,7 @@ async def WhosOnFirst(ctx):
         for item in bot.wOFDisplayList:
             if item[0]==ctx.content:
                 temp=True
-                await ctx.channel.send(('```What does {position} read?```'.format(position=item[1])))
+                await ctx.channel.send('What does {position} read?'.format(position=item[1]))
         if temp==False:
             if ctx.content=='exit':
                 await ctx.channel.send('```Exiting module```')
@@ -396,12 +417,13 @@ async def WhosOnFirst(ctx):
 async def Memory(ctx):
     #ctx = display
     if ctx.content=='exit':
+        await ctx.channel.send('```See ya```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
     if bot.memoryFirstPass==False:
         bot.memoryFirstPass=True
-        await ctx.channel.send('```What does the display state?```')
+        await ctx.channel.send('What does the display state?')
         await bot.saveCurrentUser(ctx,[bot.memoryList,bot.memoryResponse,bot.memoryPOL,bot.memoryQAsked,bot.memoryFirstPass])
         return
     try:
@@ -419,8 +441,7 @@ async def Memory(ctx):
             bot.memoryPOL='position'
         elif bot.memoryList[len(bot.memoryList)-1][1]==None:#no label
             bot.memoryPOL='label'
-        await ctx.channel.send('''```{out}```
-        send the {query} of the button pressed by the defuser'''.format(out=bot.memoryResponse,query=bot.memoryPOL))
+        await ctx.channel.send('```{out}```send the {query} of the button pressed by the defuser'.format(out=bot.memoryResponse,query=bot.memoryPOL))
         bot.memoryQAsked=True
     #ctx = button pressed
     else:
@@ -429,18 +450,18 @@ async def Memory(ctx):
         elif bot.memoryPOL=='label':
             bot.memoryList[len(bot.memoryList)-1][1]=int(ctx.content)
         bot.memoryQAsked=False
-        await ctx.channel.send('```What does the display state?```')
+        await ctx.channel.send('What does the display state?')
     await bot.saveCurrentUser(ctx,[bot.memoryList,bot.memoryResponse,bot.memoryPOL,bot.memoryQAsked,bot.memoryFirstPass])
 @bot.event
 async def MemoryRespond():
 #p=position, w=label, #s=same position in stage <>, l=same label in stage<>
 #POSITION,LABEL
     if bot.memoryResponse[1]=='p':
-        bot.memoryResponse='position '+str(bot.memoryResponse[0])
         bot.memoryList.append([bot.memoryResponse[0],None])
+        bot.memoryResponse='position '+str(bot.memoryResponse[0])
     elif bot.memoryResponse[1]=='w':
-        bot.memoryResponse='label '+str(bot.memoryResponse[0])
         bot.memoryList.append([None,bot.memoryResponse[0]])
+        bot.memoryResponse='label '+str(bot.memoryResponse[0])
     elif bot.memoryResponse[1]=='s':
         bot.memoryList.append([bot.memoryList[bot.memoryResponse[0]][0],None])
         bot.memoryResponse='position '+str(bot.memoryList[bot.memoryResponse[0]][0])
@@ -456,7 +477,7 @@ async def MorseCode(ctx):
         return
     if bot.morseReturnPass==False:
         bot.morseReturnPass=True
-        await ctx.channel.send('```Send code (.-):```')
+        await ctx.channel.send('Send code (.-):')
         await bot.saveCurrentUser(ctx,[bot.morseLetterList,bot.morseReturnPass,bot.morseFail])
         return
     for i in range(0,len(bot.morseArray)):
@@ -491,13 +512,13 @@ More needed: ```'''.format(data=temp))
 @bot.event
 async def ComplicatedWires(ctx):
     if ctx.content=='exit':
-        await ctx.channel.send('see ya')
+        await ctx.channel.send('See ya')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
     if bot.cWIndex<len(bot.cWQuestions):
         if bot.cWQAsked==False:
-            await ctx.channel.send('```Wire '+str(bot.cwWireIndex+1)+': '+bot.cWQuestions[bot.cWIndex][0]+'?'+'```')
+            await ctx.channel.send('Wire '+str(bot.cwWireIndex+1)+': '+bot.cWQuestions[bot.cWIndex][0]+'?')
             bot.cWQAsked=True
         else:
             if ctx.content=='yes':
@@ -521,12 +542,10 @@ async def ComplicatedWires(ctx):
         for i in range(0,len(bot.instructions)):
             if bot.instructions[i][0]==instruction:
                 bot.cwWireIndex=bot.cwWireIndex+1
-                await ctx.channel.send('```'+bot.instructions[i][1]+'```')
-                bot.cWQAsked=False
-                bot.cwIndex=0
                 bot.situation=''
                 bot.cWIndex=0
-                await bot.ComplicatedWires(ctx)
+                await ctx.channel.send('```'+bot.instructions[i][1]+'```Wire '+str(bot.cwWireIndex+1)+': '+bot.cWQuestions[bot.cWIndex][0]+'?')
+                bot.cWQAsked=True
         if instruction=='':
             await ctx.channel.send('```Impossible. Exiting module```')
             await bot.initModVar()
@@ -539,7 +558,7 @@ async def WireSequences(ctx):
     'Wire Sequences'
     if bot.wSeqFirstPass==False:
         bot.wSeqFirstPass=True
-        await ctx.channel.send('```What colour is the first wire```')
+        await ctx.channel.send('What colour is the first wire?')
         await bot.saveCurrentUser(ctx,[bot.wSeqRed,bot.wSeqBlue,bot.wSeqBlack,bot.wSeqFirstPass])
         return
     try:
@@ -606,7 +625,7 @@ async def Knobs(ctx):
         return
     passed=False
     if bot.knobBool==False:
-        await ctx.channel.send('Enter the configuration (Twelve bits)')
+        await ctx.channel.send('Enter the configuration: e.g. 100111001101')
         bot.knobBool=True
     else:
         for i in range(0,len(bot.knobLEDConfigs)):
@@ -637,19 +656,16 @@ async def SimonSays(ctx,param):
             await bot.initModVar()
             await bot.clearCurrentUser(ctx)
             return
-        await ctx.channel.send('```Now what did simon say?```')
+        await ctx.channel.send('Now what did simon say?')
         await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
         return
     elif bot.simonStrikes>2:
-        await ctx.channel.send('```Uh too many strikes```')
+        await ctx.channel.send('```Uh too many strikes. Exiting```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
     elif 'strike' in ctx.content:
         bot.simonStrikes=bot.simonStrikes+1
-        await ctx.channel.send('```That was dumb- Next colour please.```')
-        await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
-        return
     elif ctx.content=='exit':
         await ctx.channel.send('```See ya```')
         await bot.initModVar()
@@ -675,6 +691,22 @@ async def SimonSays(ctx,param):
     await ctx.channel.send('send the next colour or "exit"')
     await bot.saveCurrentUser(ctx,[bot.simonOut,bot.simonStrikes,bot.simonFirstPass,bot.simonVowel])
     return
+@bot.event
+async def Keypads(ctx):
+    await ctx.channel.send('```Good luck```https://cdn.discordapp.com/attachments/806548674309128242/826021656476385290/unknown.png')
+    await bot.clearCurrentUser(ctx)
+@bot.event
+async def Mazes(ctx):
+    await ctx.channel.send('```Good Luck```https://cdn.discordapp.com/attachments/806548674309128242/826022923172315136/unknown.png')
+    await bot.clearCurrentUser(ctx)
+@bot.event
+async def Vent(ctx):
+    await ctx.channel.send('```Good Luck```https://cdn.discordapp.com/attachments/806548674309128242/826024495025225738/unknown.png')
+    await bot.clearCurrentUser(ctx)
+@bot.event
+async def Capacitor(ctx):
+    await ctx.channel.send('```Good Luck```https://cdn.discordapp.com/attachments/806548674309128242/826024708704174180/unknown.png')
+    await bot.clearCurrentUser(ctx)
 @bot.event
 async def clearCurrentUser(ctx):
     for user in range(0,len(bot.currentCommands)):
@@ -710,9 +742,7 @@ async def runModules(ctx,mod,params):
     elif mod=='.knobs':
         await bot.Knobs(ctx)
     elif mod=='.memory':
-        await ctx.channel.send('```Debugging atm```')
-        await bot.clearCurrentUser(ctx)
-        #await bot.Memory(ctx)
+        await bot.Memory(ctx)
     elif mod=='.morse':
         await bot.MorseCode(ctx)
     elif mod=='.passwords':
@@ -735,6 +765,14 @@ async def runModules(ctx,mod,params):
         await bot.Wires(ctx,int(params[0]))
     elif mod=='.wireseq':
         await bot.WireSequences(ctx)
+    elif mod=='.keypads':
+        await bot.Keypads(ctx)
+    elif mod=='.mazes':
+        await bot.Mazes(ctx)
+    elif mod=='.vent':
+        await bot.Vent(ctx)
+    elif mod=='.capacitor':
+        await bot.Capacitor(ctx)
 @bot.event
 async def on_message(ctx):
     try:
