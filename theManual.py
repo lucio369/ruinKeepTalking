@@ -282,6 +282,7 @@ async def Wires(ctx,noWires):
     'Wires'
     index=noWires-3
     if ctx.content=='exit':
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -316,6 +317,7 @@ async def Wires(ctx,noWires):
 async def Button(ctx,colour,word):
     'Button'
     if ctx.content=='exit':
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -417,7 +419,7 @@ async def WhosOnFirst(ctx):
 async def Memory(ctx):
     #ctx = display
     if ctx.content=='exit':
-        await ctx.channel.send('```See ya```')
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -472,6 +474,7 @@ async def MemoryRespond():
 async def MorseCode(ctx):
     'Morse Code'
     if ctx.content=='exit':
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -512,7 +515,7 @@ More needed: ```'''.format(data=temp))
 @bot.event
 async def ComplicatedWires(ctx):
     if ctx.content=='exit':
-        await ctx.channel.send('See ya')
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -590,6 +593,8 @@ async def WireSequences(ctx):
 @bot.event
 async def Passwords(ctx):
     'Passwords'
+    if ctx.content=='exit':
+        await ctx.channel.send('```Exiting module```')
     if bot.passwordsFirstPass==False:
         bot.passwordsFirstPass=True
         try:
@@ -620,6 +625,7 @@ async def Passwords(ctx):
 @bot.event
 async def Knobs(ctx):
     if ctx.content=='exit':
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -667,7 +673,7 @@ async def SimonSays(ctx,param):
     elif 'strike' in ctx.content:
         bot.simonStrikes=bot.simonStrikes+1
     elif ctx.content=='exit':
-        await ctx.channel.send('```See ya```')
+        await ctx.channel.send('```Exiting module```')
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
@@ -788,7 +794,6 @@ async def on_message(ctx):
                         bot.currentCommands.append([ctx.guild.id,ctx.author.id,comm])
                         bot.currentCommands[len(bot.currentCommands)-1].append(ctx.content.split(' ')[1:len(ctx.content.split(' '))])
                         bot.currentCommands[len(bot.currentCommands)-1].append([])
-                    #[guildid,userid,command,params,variables]
         for job in bot.currentCommands:
             if job[:2]==[ctx.guild.id,ctx.author.id]:
                 if job==bot.currentCommands[len(bot.currentCommands)-1] and fUser==True:
