@@ -138,7 +138,7 @@ async def initModConst():
                  ['leed','bottom left'],['hold on','bottom right'],['you','middle right'],['you are','bottom right'],
                  ['your','middle right'],["you're",'middle right'],["youre",'middle right'],['ur','top left'],['there','bottom right'],
                  ["they're",'bottom left'],["theyre",'bottom left'],['their','middle right'],['they are','middle left'],
-                 ['see','bottom right'],['c','top right'],['cee','bottom right']]
+                 ['see','bottom right'],['c','top right'],['cee','bottom right'],[' ','bottom left']]
     bot.wOFPotencialList=[['READY','YES', 'OKAY', 'WHAT', 'MIDDLE', 'LEFT', 'PRESS', 'RIGHT', 'BLANK', 'READY', 'NO', 'FIRST', 'UHHH', 'NOTHING', 'WAIT'],
      ['FIRST','LEFT', 'OKAY', 'YES', 'MIDDLE', 'NO', 'RIGHT', 'NOTHING', 'UHHH', 'WAIT', 'READY', 'BLANK', 'WHAT', 'PRESS', 'FIRST'],
      ['NO','BLANK', 'UHHH', 'WAIT', 'FIRST', 'WHAT', 'READY', 'RIGHT', 'YES', 'NOTHING', 'LEFT', 'PRESS', 'OKAY', 'NO', 'MIDDLE'],
