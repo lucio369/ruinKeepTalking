@@ -91,9 +91,11 @@ async def initModConst():
                        ['b','s'],['bs','d'],['bl','p'],['bsl','p'],
                        ['s','c'],['sl','b'],
                        ['l','d']]
-    bot.instructions=[['c','Cut Wire'],['d','Do not cut wire'],['s','Cut wire if LAST DIGIT EVEN'],
-                      ['p','Cut wire if bomb has PARRALLEL PORT'],['b','Cut wire if bomb has TWO OR MORE batteries']]
-    bot.cWQuestions=[['red','r'],['blue','b'],['has star','s'],['LED on','l']]
+    bot.instructions={'c':'Cut Wire',
+                      'd':'Do not cut wire',
+                      's':'Cut wire if LAST DIGIT EVEN',
+                      'p':'Cut wire if bomb has PARRALLEL PORT',
+                      'b':'Cut wire if bomb has TWO OR MORE batteries'}
     #knobs constants
     bot.knobLEDConfigs=[['010111011011','100111001101'],
                     ['011111010011','100110001001'],
@@ -182,9 +184,7 @@ async def initModVar():
     bot.haltButton=False
     #complicated wires variables
     bot.situation=''
-    bot.cWIndex=0
     bot.cWQAsked=False
-    bot.cwWireIndex=0
     #knob variables
     bot.knobBool=False
     #memory variables
@@ -519,42 +519,43 @@ async def ComplicatedWires(ctx):
         await bot.initModVar()
         await bot.clearCurrentUser(ctx)
         return
-    if bot.cWIndex<len(bot.cWQuestions):
-        if bot.cWQAsked==False:
-            await ctx.channel.send('Wire '+str(bot.cwWireIndex+1)+': '+bot.cWQuestions[bot.cWIndex][0]+'?')
-            bot.cWQAsked=True
-        else:
-            if ctx.content=='yes':
-                bot.situation=bot.situation+bot.cWQuestions[bot.cWIndex][1]
-            elif ctx.content=='no':
-                pass
-            else:
-                await ctx.channel.send('```bad conditions- restart```')
-                await bot.initModVar()
-                await bot.clearCurrentUser(ctx)
-                return
-            bot.cWIndex=bot.cWIndex+1
-            bot.cWQAsked=False
-            await bot.ComplicatedWires(ctx)
-            return
+    if bot.cWQAsked==False:
+        bot.cWQAsked=True
+        await ctx.channel.send('Respond with 1 or 0 (true or false) for the following:\n```<red> <blue> <has star> <LED on>```\ninput should look similar to this: 0101')
     else:
+        counter=0
+        for i in list(ctx.content):
+            if i=='1':
+                if counter==0:
+                    bot.situation=bot.situation+'r'
+                elif counter==1:
+                    bot.situation=bot.situation+'b'
+                elif counter==2:
+                    bot.situation=bot.situation+'s'
+                elif counter==3:
+                    bot.situation=bot.situation+'l'
+                else:
+                    await ctx.channel.send('```Too many bits! Exiting module```')
+                    await bot.initModVar()
+                    await bot.clearCurrentUser(ctx)
+                    return
+            counter=counter+1
+        #form situation
         instruction=''
-        for i in range(0,len(bot.wireSituation)):
-            if bot.situation==bot.wireSituation[i][0]:
-                instruction=bot.wireSituation[i][1]
-        for i in range(0,len(bot.instructions)):
-            if bot.instructions[i][0]==instruction:
-                bot.cwWireIndex=bot.cwWireIndex+1
-                bot.situation=''
-                bot.cWIndex=0
-                await ctx.channel.send('```'+bot.instructions[i][1]+'```Wire '+str(bot.cwWireIndex+1)+': '+bot.cWQuestions[bot.cWIndex][0]+'?')
-                bot.cWQAsked=True
-        if instruction=='':
-            await ctx.channel.send('```Impossible. Exiting module```')
-            await bot.initModVar()
-            await bot.clearCurrentUser(ctx)
-            return
-    await bot.saveCurrentUser(ctx,[bot.situation,bot.cWIndex,bot.cWQAsked,bot.cwWireIndex])
+        for i in bot.wireSituation:
+            if bot.situation==i[0]:
+                instruction=i[1]
+        #try:
+        await ctx.channel.send('```'+bot.instructions[instruction]+'```'+'Send next wire or "exit"\nR B S L')
+        bot.situation=''
+        #except:
+        '''
+        await ctx.channel.send('```Impossible. Exiting module```')
+        await bot.initModVar()
+        await bot.clearCurrentUser(ctx)
+        return
+        '''
+    await bot.saveCurrentUser(ctx,[bot.situation,bot.cWQAsked])
     return
 @bot.event
 async def WireSequences(ctx):
@@ -804,7 +805,7 @@ async def on_message(ctx):
                     elif job[2]=='.wires':
                         bot.wiresCounter,bot.wiresQAsked=job[4]
                     elif job[2]=='.compwires':
-                        bot.situation,bot.cWIndex,bot.cWQAsked,bot.cwWireIndex=job[4]
+                        bot.situation,bot.cWQAsked=job[4]
                     elif job[2]=='.memory':
                         bot.memoryList,bot.memoryResponse,bot.memoryPOL,bot.memoryQAsked,bot.memoryFirstPass=job[4]
                     elif job[2]=='.morse':
